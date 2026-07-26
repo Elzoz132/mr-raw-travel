@@ -101,33 +101,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     }
   }
 
-  const handleGoogleAuth = async () => {
-    setLoading(true)
-    setErrorMsg('')
-    try {
-      const mockGoogleEmail = `user_${Math.floor(Math.random() * 9000 + 1000)}@gmail.com`
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Google User',
-          email: mockGoogleEmail,
-          isGoogleAuth: true
-        })
-      })
-
-      const data = await res.json()
-      if (res.ok && data.success) {
-        onClose()
-        if (onSuccess) onSuccess()
-        router.push('/customer')
-        router.refresh()
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Google Auth failed.')
-    } finally {
-      setLoading(false)
-    }
+  const handleGoogleAuth = () => {
+    window.location.href = '/api/auth/google'
   }
 
   return (
