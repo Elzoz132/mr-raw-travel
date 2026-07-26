@@ -40,6 +40,8 @@ export const metadata: Metadata = {
   },
 }
 
+import { FloatingWhatsAppWidget } from '@/components/common/FloatingWhatsAppWidget'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -53,6 +55,7 @@ export default function RootLayout({
         <Navbar />
         <SearchModal />
         <main className="flex-1">{children}</main>
+        <FloatingWhatsAppWidget />
         <Footer />
       </body>
     </html>

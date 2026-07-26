@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useStore'
-import { LayoutDashboard, Palmtree, Users, Ticket, ShoppingBag, LogOut, Crown } from 'lucide-react'
+import { LayoutDashboard, Palmtree, Users, Ticket, ShoppingBag, LogOut, Crown, Settings } from 'lucide-react'
 
 export const AdminHeader: React.FC = () => {
   const pathname = usePathname()
@@ -19,11 +19,12 @@ export const AdminHeader: React.FC = () => {
   }
 
   const navItems = [
-    { href: '/admin/dashboard', label: isArabic ? '📊 الإحصائيات والإيرادات' : 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/trips', label: isArabic ? '🌴 إدارة الباقات والأسعار' : 'Manage Packages', icon: Palmtree },
-    { href: '/admin/crm', label: isArabic ? '👥 قاعدة بيانات العملاء' : 'Customer Database', icon: Users },
-    { href: '/admin/coupons', label: isArabic ? '🎟️ أكواد الخصم والبرومو' : 'Promo Coupons', icon: Ticket },
-    { href: '/admin/bookings', label: isArabic ? '📋 إدارة الحجوزات' : 'All Bookings', icon: ShoppingBag },
+    { href: '/admin/dashboard', label: isArabic ? '📊 الإحصائيات' : 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/trips', label: isArabic ? '🌴 إدارة الباقات' : 'Manage Packages', icon: Palmtree },
+    { href: '/admin/crm', label: isArabic ? '👥 العملاء' : 'Customers', icon: Users },
+    { href: '/admin/coupons', label: isArabic ? '🎟️ أكواد الخصم' : 'Coupons', icon: Ticket },
+    { href: '/admin/bookings', label: isArabic ? '📋 الحجوزات' : 'Bookings', icon: ShoppingBag },
+    { href: '/admin/settings', label: isArabic ? '⚙️ الواتساب والإعدادات' : 'Settings', icon: Settings },
   ]
 
   return (

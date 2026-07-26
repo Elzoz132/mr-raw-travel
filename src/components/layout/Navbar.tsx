@@ -233,7 +233,75 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-30 bg-[#0B0F17] pt-24 px-6 space-y-6 lg:hidden">
+        <div className="fixed inset-0 z-30 bg-[#0B0F17]/95 backdrop-blur-xl pt-24 px-6 space-y-6 lg:hidden overflow-y-auto">
+          
+          {/* Quick Action Tools */}
+          <div className="grid grid-cols-2 gap-3 pb-4 border-b border-white/10">
+            <button
+              onClick={() => { setMobileMenuOpen(false); setSearchOpen(true) }}
+              className="py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2"
+            >
+              <Search className="w-4 h-4 text-[#D4AF37]" />
+              <span>{isArabic ? 'البحث عن رحلة' : 'Search Excursions'}</span>
+            </button>
+
+            {currentUser ? (
+              <button
+                onClick={handleLogout}
+                className="py-2.5 px-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold text-xs flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{isArabic ? 'تسجيل الخروج' : 'Sign Out'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => { setMobileMenuOpen(false); setAuthModalOpen(true) }}
+                className="py-2.5 px-3 rounded-xl bg-[#D4AF37] text-[#0B0F17] font-bold text-xs flex items-center justify-center gap-1.5"
+              >
+                <User className="w-4 h-4" />
+                <span>{isArabic ? 'تسجيل دخول' : 'Sign In'}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Language & Currency selectors in Mobile Drawer */}
+          <div className="space-y-3 pb-4 border-b border-white/10">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400 font-bold">{isArabic ? 'اللغة / Language' : 'Language'}</span>
+              <div className="flex items-center bg-white/5 p-1 rounded-xl border border-white/10 font-bold">
+                {(['en', 'ar', 'de'] as const).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    className={`px-2.5 py-1 rounded-lg uppercase text-[11px] ${
+                      language === lang ? 'bg-[#D4AF37] text-[#0B0F17]' : 'text-slate-400'
+                    }`}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400 font-bold">{isArabic ? 'العملة / Currency' : 'Currency'}</span>
+              <div className="flex items-center bg-white/5 p-1 rounded-xl border border-white/10 font-bold">
+                {(['USD', 'EUR', 'EGP'] as Currency[]).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setCurrency(c)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] ${
+                      currency === c ? 'bg-[#D4AF37] text-[#0B0F17]' : 'text-slate-400'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Links */}
           <nav className="flex flex-col gap-4 text-base font-bold text-white">
             <Link href="/" onClick={() => setMobileMenuOpen(false)}>{t.home}</Link>
             <Link href="/trips" onClick={() => setMobileMenuOpen(false)}>{t.trips}</Link>
@@ -241,18 +309,19 @@ export const Navbar: React.FC = () => {
             <Link href="/blog" onClick={() => setMobileMenuOpen(false)}>{t.blog}</Link>
 
             {currentUser?.role === 'ADMIN' && (
-              <Link href="/admin/dashboard" onClick={() => setMobileMenuOpen(false)} className="text-[#D4AF37]">
-                👑 {isArabic ? 'لوحة التحكم الإدارية' : 'Admin Executive Panel'}
+              <Link
+                href="/admin/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-3 rounded-2xl bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] flex items-center justify-between font-black"
+              >
+                <span>👑 {isArabic ? 'لوحة التحكم الإدارية' : 'Admin Executive Panel'}</span>
               </Link>
             )}
 
-            {!currentUser && (
-              <button
-                onClick={() => { setMobileMenuOpen(false); setAuthModalOpen(true) }}
-                className="w-full py-3 rounded-xl bg-[#D4AF37] text-[#0B0F17] font-bold text-center"
-              >
-                {isArabic ? 'تسجيل الدخول / حساب جديد' : 'Sign In / Register'}
-              </button>
+            {currentUser && currentUser.role !== 'ADMIN' && (
+              <Link href="/customer" onClick={() => setMobileMenuOpen(false)} className="text-emerald-400">
+                {isArabic ? 'حجوزاتي وحسابي' : 'My Bookings & Account'}
+              </Link>
             )}
           </nav>
         </div>
