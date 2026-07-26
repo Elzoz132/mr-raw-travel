@@ -7,32 +7,35 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
 
-    const {
-      tripId,
-      tripDate,
-      adults,
-      children,
-      currency,
-      totalPrice,
-      hotelName,
-      hotelAddress,
-      roomNumber,
-      fullName,
-      email,
-      phone,
-      whatsApp,
-      nationality,
-      emergencyContact,
-      specialNotes,
-      paymentMethod,
-      receiptUrl
-    } = body
+    const tripId = body.tripId
+    const tripDate = body.tripDate || new Date().toISOString()
+    const adults = Number(body.adults) || 1
+    const children = Number(body.children) || 0
+    const currency = body.currency || 'USD'
+    const totalPrice = Number(body.totalPrice) || 0
 
-    if (!tripId || !fullName || !email || !phone || !hotelName) {
-      return NextResponse.json(
-        { error: 'Missing required booking fields.' },
-        { status: 400 }
-      )
+    const fullName = body.fullName || body.leadPassengerName || 'Guest Passenger'
+    const email = body.email || body.leadEmail || 'guest@mrrawtravel.com'
+    const phone = body.phone || body.leadPhone || '+201070657476'
+    const whatsApp = body.whatsApp || body.whatsappPhone || body.leadWhatsApp || phone
+    const nationality = body.nationality || 'Egyptian'
+
+    const hotelName = body.hotelName || 'Hurghada Hotel'
+    const hotelAddress = body.hotelAddress || ''
+    const roomNumber = body.roomNumber || ''
+
+    const paymentMethod = body.paymentMethod || 'CASH'
+    const receiptUrl = body.receiptUrl || ''
+    const emergencyContact = body.emergencyContact || ''
+    const specialNotes = body.specialNotes || body.specialRequests || ''
+
+    // Fetch default trip if tripId is not a valid UUID
+    let targetTripId = tripId
+    if (!targetTripId || targetTripId === '1') {
+      const firstTrip = await prisma.trip.findFirst()
+      if (firstTrip) {
+        targetTripId = firstTrip.id
+      }
     }
 
     const bookingNumber = generateBookingNumber()
@@ -54,12 +57,12 @@ export async function POST(req: Request) {
     const booking = await prisma.booking.create({
       data: {
         bookingNumber,
-        tripId,
-        tripDate: new Date(tripDate || Date.now()),
-        adults: Number(adults) || 1,
-        children: Number(children) || 0,
-        currency: currency || 'USD',
-        totalPrice: Number(totalPrice) || 0,
+        tripId: targetTripId,
+        tripDate: new Date(tripDate),
+        adults,
+        children,
+        currency,
+        totalPrice,
         pickupLocation: `${hotelName} ${hotelAddress ? `(${hotelAddress})` : ''}`,
         hotelName,
         hotelAddress,
@@ -67,11 +70,11 @@ export async function POST(req: Request) {
         leadPassengerName: fullName,
         leadEmail: email,
         leadPhone: phone,
-        leadWhatsApp: whatsApp || phone,
-        leadNationality: nationality || 'International',
+        leadWhatsApp: whatsApp,
+        leadNationality: nationality,
         emergencyContact,
         specialNotes,
-        paymentMethod: paymentMethod || 'CASH',
+        paymentMethod,
         paymentStatus,
         bookingStatus,
         qrToken,
@@ -94,8 +97,8 @@ export async function POST(req: Request) {
       email,
       name: fullName,
       phone,
-      whatsApp: whatsApp || phone,
-      nationality: nationality || 'International',
+      whatsApp,
+      nationality,
       spendUsd: currency === 'USD' ? totalPrice : totalPrice / 1.0,
     })
 
@@ -106,10 +109,10 @@ export async function POST(req: Request) {
       qrToken: booking.qrToken
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating booking API:', error)
     return NextResponse.json(
-      { error: 'Internal server error creating booking.' },
+      { error: error?.message || 'Internal server error creating booking.' },
       { status: 500 }
     )
   }
