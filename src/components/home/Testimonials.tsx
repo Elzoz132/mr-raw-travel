@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { motion } from 'framer-motion'
 import { Star, Quote, CheckCircle } from 'lucide-react'
 
 export const Testimonials: React.FC = () => {
@@ -33,27 +34,38 @@ export const Testimonials: React.FC = () => {
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="text-center max-w-2xl mx-auto mb-16 space-y-3"
+      >
         <span className="text-xs font-bold tracking-widest text-[#D4AF37] uppercase block">
           REAL GUEST REVIEWS
         </span>
         <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
           Loved by Over 50,000 Tourists
         </h2>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {reviews.map((rev, idx) => (
-          <div
+          <motion.div
             key={idx}
-            className="glass-card rounded-3xl p-8 flex flex-col justify-between space-y-6 relative"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: idx * 0.15 }}
+            whileHover={{ y: -8 }}
+            className="glass-card rounded-3xl p-8 flex flex-col justify-between space-y-6 relative border border-white/10 hover:border-[#D4AF37]/40 hover:shadow-[0_15px_30px_rgba(212,175,55,0.15)] transition-all duration-300"
           >
             <Quote className="w-10 h-10 text-[#D4AF37]/20 absolute top-6 right-6" />
 
             <div className="space-y-4">
               <div className="flex items-center gap-1 text-amber-400">
                 {[...Array(rev.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-current" />
+                  <Star key={i} className="w-4 h-4 fill-current animate-pulse" />
                 ))}
               </div>
 
@@ -66,7 +78,7 @@ export const Testimonials: React.FC = () => {
               <img
                 src={rev.avatar}
                 alt={rev.name}
-                className="w-12 h-12 rounded-full object-cover border-2 border-[#D4AF37]"
+                className="w-12 h-12 rounded-full object-cover border-2 border-[#D4AF37] shadow-md"
               />
               <div>
                 <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
@@ -78,7 +90,7 @@ export const Testimonials: React.FC = () => {
               </div>
             </div>
 
-          </div>
+          </motion.div>
         ))}
       </div>
     </section>

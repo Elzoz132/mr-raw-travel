@@ -6,6 +6,10 @@ import { Footer } from '@/components/layout/Footer'
 import { CustomCursor } from '@/components/ui/CustomCursor'
 import { SearchModal } from '@/components/layout/SearchModal'
 import { Pixels } from '@/components/marketing/Pixels'
+import { FloatingWhatsAppWidget } from '@/components/common/FloatingWhatsAppWidget'
+import { SmoothScrollProvider } from '@/components/common/SmoothScrollProvider'
+import { AmbientBackground } from '@/components/common/AmbientBackground'
+import { ScrollProgressBar } from '@/components/common/ScrollProgressBar'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -40,8 +44,6 @@ export const metadata: Metadata = {
   },
 }
 
-import { FloatingWhatsAppWidget } from '@/components/common/FloatingWhatsAppWidget'
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -49,14 +51,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${ibmArabic.variable}`}>
-      <body className="bg-[#0B0F17] text-white min-h-screen flex flex-col antialiased">
-        <Pixels />
-        <CustomCursor />
-        <Navbar />
-        <SearchModal />
-        <main className="flex-1">{children}</main>
-        <FloatingWhatsAppWidget />
-        <Footer />
+      <body className="bg-[#0B0F17] text-white min-h-screen flex flex-col antialiased relative">
+        <SmoothScrollProvider>
+          <AmbientBackground />
+          <ScrollProgressBar />
+          <Pixels />
+          <CustomCursor />
+          <Navbar />
+          <SearchModal />
+          <main className="flex-1 relative z-10">{children}</main>
+          <FloatingWhatsAppWidget />
+          <Footer />
+        </SmoothScrollProvider>
       </body>
     </html>
   )

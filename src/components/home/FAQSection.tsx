@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, HelpCircle } from 'lucide-react'
 
 export const FAQSection: React.FC = () => {
@@ -30,12 +31,12 @@ export const FAQSection: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+    <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <div className="text-center mb-12 space-y-3">
         <span className="text-xs font-bold tracking-widest text-[#D4AF37] uppercase block">
           FREQUENTLY ASKED QUESTIONS
         </span>
-        <h2 className="text-3xl font-extrabold text-white">
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
           Everything You Need to Know
         </h2>
       </div>
@@ -44,9 +45,13 @@ export const FAQSection: React.FC = () => {
         {faqs.map((faq, idx) => {
           const isOpen = openIndex === idx
           return (
-            <div
+            <motion.div
               key={idx}
-              className="glass-panel rounded-2xl overflow-hidden border border-white/10 transition-all"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: idx * 0.1 }}
+              className="glass-panel rounded-2xl overflow-hidden border border-white/10 transition-colors duration-300 hover:border-[#D4AF37]/30"
             >
               <button
                 onClick={() => setOpenIndex(isOpen ? null : idx)}
@@ -56,19 +61,30 @@ export const FAQSection: React.FC = () => {
                   <HelpCircle className="w-5 h-5 text-[#D4AF37] shrink-0" />
                   {faq.q}
                 </span>
-                <ChevronDown
-                  className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${
-                    isOpen ? 'rotate-180 text-[#D4AF37]' : ''
-                  }`}
-                />
+                <motion.div
+                  animate={{ rotate: isOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ChevronDown className={`w-5 h-5 ${isOpen ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+                </motion.div>
               </button>
 
-              {isOpen && (
-                <div className="px-6 pb-6 pt-2 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5">
-                  {faq.a}
-                </div>
-              )}
-            </div>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-6 pb-6 pt-2 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5">
+                      {faq.a}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           )
         })}
       </div>

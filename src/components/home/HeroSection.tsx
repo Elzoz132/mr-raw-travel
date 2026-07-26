@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useStore'
 import { dictionaries } from '@/lib/i18n/dictionaries'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
@@ -26,7 +27,7 @@ export const HeroSection: React.FC = () => {
       
       {/* Background Gradient & Ambient Glows */}
       <div className="absolute inset-0 bg-[#0B0F17] -z-20" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-[#D4AF37]/15 via-[#0EA5E9]/10 to-transparent blur-[140px] rounded-full pointer-events-none -z-10" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-[#D4AF37]/15 via-[#0EA5E9]/10 to-transparent blur-[140px] rounded-full pointer-events-none -z-10 animate-pulse duration-[10000ms]" />
       
       {/* Background Image / Overlay Fallback */}
       <div 
@@ -37,29 +38,50 @@ export const HeroSection: React.FC = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-[#0B0F17]/70 to-[#0B0F17]/30 -z-10" />
 
-      <div className="max-w-6xl mx-auto w-full text-center space-y-8">
+      <div className="max-w-6xl mx-auto w-full text-center space-y-8 relative z-10">
         
         {/* Top Luxury Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#D4AF37]/40 backdrop-blur-md shadow-[0_0_20px_rgba(212,175,55,0.2)]">
-          <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-[#D4AF37]/40 backdrop-blur-md shadow-[0_0_25px_rgba(212,175,55,0.25)]"
+        >
+          <Sparkles className="w-4 h-4 text-[#D4AF37] animate-spin duration-[4000ms]" />
           <span className="text-xs font-semibold tracking-wide text-slate-200 uppercase">
             {t.badge}
           </span>
-        </div>
+        </motion.div>
 
         {/* Main Headline */}
         <div className="space-y-4">
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.1]"
+          >
             {t.titleLine1} <br />
             <span className="gold-gradient-text">{t.titleLine2}</span>
-          </h1>
-          <p className="max-w-3xl mx-auto text-base sm:text-lg text-slate-300 font-normal leading-relaxed">
+          </motion.h1>
+          
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="max-w-3xl mx-auto text-base sm:text-lg text-slate-300 font-normal leading-relaxed"
+          >
             {t.subtitle}
-          </p>
+          </motion.p>
         </div>
 
         {/* Quick Search Widget Glass Container */}
-        <div className="max-w-4xl mx-auto glass-panel rounded-3xl p-4 sm:p-6 shadow-2xl border border-[#D4AF37]/30">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-4xl mx-auto glass-panel rounded-3xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#D4AF37]/40 hover:border-[#D4AF37] transition-all duration-500"
+        >
           <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end text-left">
             
             {/* Category Select */}
@@ -71,7 +93,7 @@ export const HeroSection: React.FC = () => {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3.5 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-[#D4AF37] transition-colors"
               >
                 <option value="all" className="bg-[#0F172A] text-white">All Excursions</option>
                 <option value="sea-trips" className="bg-[#0F172A] text-white">Sea & Island Trips</option>
@@ -91,7 +113,7 @@ export const HeroSection: React.FC = () => {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3.5 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-[#D4AF37] transition-colors"
               />
             </div>
 
@@ -104,7 +126,7 @@ export const HeroSection: React.FC = () => {
               <select
                 value={guests}
                 onChange={(e) => setGuests(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-[#D4AF37]"
+                className="w-full px-3.5 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-[#D4AF37] transition-colors"
               >
                 <option value="1" className="bg-[#0F172A] text-white">1 Traveler</option>
                 <option value="2" className="bg-[#0F172A] text-white">2 Travelers</option>
@@ -115,19 +137,30 @@ export const HeroSection: React.FC = () => {
 
             {/* Search Submit Button */}
             <div>
-              <LuxuryButton type="submit" variant="gold" className="w-full py-3.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+              <LuxuryButton
+                type="submit"
+                variant="gold"
+                size="lg"
+                data-cursor-text="SEARCH"
+                className="w-full py-3.5 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(212,175,55,0.4)]"
+              >
                 <Search className="w-4 h-4" />
                 {t.searchBtn}
               </LuxuryButton>
             </div>
 
           </form>
-        </div>
+        </motion.div>
 
         {/* Bottom Trust Indicators */}
-        <div className="pt-6 flex flex-wrap items-center justify-center gap-8 sm:gap-16 text-slate-400 text-xs sm:text-sm font-medium">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="pt-6 flex flex-wrap items-center justify-center gap-8 sm:gap-16 text-slate-400 text-xs sm:text-sm font-medium"
+        >
           <div className="flex items-center gap-2">
-            <Star className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37]" />
+            <Star className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37] animate-pulse" />
             <span className="text-slate-200 font-bold">{t.statsRating}</span>
           </div>
           <div className="flex items-center gap-2">
@@ -138,7 +171,7 @@ export const HeroSection: React.FC = () => {
             <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
             <span className="text-slate-200 font-bold">{t.statsSafety}</span>
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </section>

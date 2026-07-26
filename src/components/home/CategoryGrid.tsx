@@ -2,7 +2,8 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Anchor, Compass, Crown, Landmark, Waves } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Anchor, Compass, Crown, Landmark } from 'lucide-react'
 
 export const CategoryGrid: React.FC = () => {
   const categories = [
@@ -42,49 +43,62 @@ export const CategoryGrid: React.FC = () => {
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="text-center max-w-2xl mx-auto mb-12">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="text-center max-w-2xl mx-auto mb-12"
+      >
         <span className="text-xs font-bold tracking-widest text-[#D4AF37] uppercase block mb-2">
           EXPLORE BY CATEGORY
         </span>
         <h2 className="text-3xl font-extrabold text-white">
           Curated Hurghada Travel Categories
         </h2>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {categories.map((cat) => {
+        {categories.map((cat, idx) => {
           const Icon = cat.icon
           return (
-            <Link
+            <motion.div
               key={cat.slug}
-              href={`/trips?category=${cat.slug}`}
-              className="glass-card rounded-3xl overflow-hidden group relative h-80 flex flex-col justify-end p-6"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.12 }}
             >
-              <img
-                src={cat.image}
-                alt={cat.title}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 -z-10"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-[#0B0F17]/40 to-transparent -z-10" />
+              <Link
+                href={`/trips?category=${cat.slug}`}
+                className="glass-card rounded-3xl overflow-hidden group relative h-80 flex flex-col justify-end p-6 border border-white/10 hover:border-[#D4AF37]/50 hover:shadow-[0_0_30px_rgba(212,175,55,0.25)] transition-all duration-500 block"
+              >
+                <img
+                  src={cat.image}
+                  alt={cat.title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out -z-10"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-[#0B0F17]/50 to-transparent -z-10" />
 
-              <div className="space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-[#D4AF37] text-[#0B0F17] flex items-center justify-center font-bold shadow-lg mb-3">
-                  <Icon className="w-5 h-5" />
+                <div className="space-y-2 relative z-10">
+                  <div className="w-11 h-11 rounded-2xl bg-[#D4AF37] text-[#0B0F17] flex items-center justify-center font-bold shadow-lg mb-3 group-hover:rotate-6 transition-transform duration-300">
+                    <Icon className="w-5 h-5" />
+                  </div>
+
+                  <span className="text-[11px] font-semibold text-[#D4AF37] tracking-wider uppercase block">
+                    {cat.count}
+                  </span>
+
+                  <h3 className="text-xl font-bold text-white group-hover:text-[#D4AF37] transition-colors">
+                    {cat.title}
+                  </h3>
+
+                  <p className="text-xs text-slate-300 line-clamp-2">
+                    {cat.desc}
+                  </p>
                 </div>
-
-                <span className="text-[11px] font-semibold text-[#D4AF37] tracking-wider uppercase block">
-                  {cat.count}
-                </span>
-
-                <h3 className="text-xl font-bold text-white group-hover:text-[#D4AF37] transition-colors">
-                  {cat.title}
-                </h3>
-
-                <p className="text-xs text-slate-300 line-clamp-2">
-                  {cat.desc}
-                </p>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
           )
         })}
       </div>
