@@ -4,6 +4,12 @@ import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
+const ADMIN_EMAILS = [
+  'zeyadadel132123@gmail.com',
+  'zeyadadel123132@gmail.com',
+  'admin@mrrawtravel.com'
+]
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
@@ -52,6 +58,8 @@ export async function GET(req: Request) {
     }
 
     const cleanEmail = googleUser.email.toLowerCase().trim()
+    const isAdmin = ADMIN_EMAILS.includes(cleanEmail)
+    const targetRole = isAdmin ? 'ADMIN' : 'CUSTOMER'
 
     // Find or Create User in DB
     let user = await prisma.user.findUnique({
@@ -64,7 +72,7 @@ export async function GET(req: Request) {
           name: googleUser.name || cleanEmail.split('@')[0],
           email: cleanEmail,
           password: 'google_oauth_authenticated',
-          role: 'CUSTOMER',
+          role: targetRole,
           avatar: googleUser.picture || null
         }
       })
@@ -73,9 +81,15 @@ export async function GET(req: Request) {
       await prisma.customerProfile.create({
         data: {
           userId: user.id,
-          segment: 'STANDARD',
-          tags: JSON.stringify(['Google OAuth Customer', 'Real Sign-In'])
+          segment: isAdmin ? 'VIP' : 'STANDARD',
+          tags: JSON.stringify(['Google OAuth User', isAdmin ? 'Admin Account' : 'Customer Account'])
         }
+      })
+    } else if (isAdmin && user.role !== 'ADMIN') {
+      // Upgrade existing user to ADMIN
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'ADMIN' }
       })
     }
 
@@ -87,6 +101,11 @@ export async function GET(req: Request) {
       path: '/',
       maxAge: 60 * 60 * 24 * 7
     })
+
+    // If ADMIN, redirect straight to executive admin dashboard
+    if (user.role === 'ADMIN') {
+      return NextResponse.redirect(`${protocol}://${host}/admin/dashboard`)
+    }
 
     return NextResponse.redirect(`${protocol}://${host}/customer`)
   } catch (err: any) {

@@ -38,6 +38,20 @@ async function main() {
     }
   })
 
+  await prisma.user.create({
+    data: {
+      email: 'zeyadadel132123@gmail.com',
+      name: 'Zeyad Adel Admin',
+      role: 'SUPER_ADMIN',
+      phone: '01070657476',
+      whatsApp: '01070657476',
+      nationality: 'Egyptian',
+      country: 'Egypt',
+      city: 'Hurghada',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
+    }
+  })
+
   const customerUser = await prisma.user.create({
     data: {
       email: 'alex.schmidt@example.de',
