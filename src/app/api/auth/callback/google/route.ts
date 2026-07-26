@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
-  const host = req.headers.get('host') || 'localhost:3000'
+  const host = req.headers.get('host') || 'mr-raw-travel.vercel.app'
   const protocol = host.includes('localhost') ? 'http' : 'https'
   const redirectUri = `${protocol}://${host}/api/auth/callback/google`
 
@@ -14,7 +16,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const clientId = process.env.GOOGLE_CLIENT_ID
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
     if (!clientId || !clientSecret) {

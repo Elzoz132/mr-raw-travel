@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: Request) {
-  const clientId = process.env.GOOGLE_CLIENT_ID
-  const host = req.headers.get('host') || 'localhost:3000'
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  const host = req.headers.get('host') || 'mr-raw-travel.vercel.app'
   const protocol = host.includes('localhost') ? 'http' : 'https'
   const redirectUri = `${protocol}://${host}/api/auth/callback/google`
 
@@ -13,8 +15,8 @@ export async function GET(req: Request) {
           <div style="background:rgba(255,255,255,0.05);border:1px solid #D4AF37;padding:30px;border-radius:20px;text-align:center;max-width:450px;">
             <h2 style="color:#D4AF37;margin-top:0;">⚠️ Google OAuth Setup Required</h2>
             <p style="font-size:14px;color:#ccc;line-height:1.6;">
-              Environment variable <b>GOOGLE_CLIENT_ID</b> is missing on Vercel.<br/><br/>
-              <b>Action required:</b> After adding GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Vercel Environment Variables, click <b>Redeploy</b> in Vercel.
+              Environment variable <b>GOOGLE_CLIENT_ID</b> is missing or empty.<br/><br/>
+              <b>Action required:</b> In Vercel Environment Variables, ensure key is <b>GOOGLE_CLIENT_ID</b> and value contains your Google OAuth Client ID, then click <b>Redeploy</b>.
             </p>
             <a href="/" style="display:inline-block;margin-top:15px;padding:10px 20px;background:#D4AF37;color:#0B0F17;font-weight:bold;border-radius:10px;text-decoration:none;">Back to Website</a>
           </div>
