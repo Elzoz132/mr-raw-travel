@@ -10,30 +10,38 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String?
-  email         String    @unique
-  password      String?
-  role          String    @default("CUSTOMER") // SUPER_ADMIN, ADMIN, MANAGER, ACCOUNTANT, GUIDE, DRIVER, CUSTOMER
-  phone         String?
-  whatsApp      String?
-  nationality   String?
-  country       String?
-  city          String?
-  avatar        String?
-  language      String    @default("en")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  id                 String    @id @default(uuid())
+  name               String?
+  email              String    @unique
+  password           String?
+  role               String    @default("CUSTOMER") // SUPER_ADMIN, ADMIN, CONTENT_EDITOR, CUSTOMER_SUPPORT, CUSTOMER
+  status             String    @default("ACTIVE")   // ACTIVE, SUSPENDED, UNVERIFIED
+  phone              String?
+  whatsApp           String?
+  nationality        String?
+  country            String?
+  city               String?
+  avatar             String?
+  language           String    @default("en")
+  lastLoginAt        DateTime?
+  isTwoFactorEnabled Boolean   @default(false)
+  twoFactorSecret    String?
 
-  bookings      Booking[]
-  reviews       Review[]
-  activityLogs  ActivityLog[]
-  auditLogs     AuditLog[]
-  customerProfile CustomerProfile?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
+  deletedAt          DateTime?
+
+  bookings           Booking[]
+  reviews            Review[]
+  activityLogs       ActivityLog[]
+  auditLogs          AuditLog[]
+  loginHistories     LoginHistory[]
+  sessions           UserSession[]
+  customerProfile    CustomerProfile?
 
   @@index([email])
   @@index([role])
+  @@index([status])
 }
 
 model CustomerProfile {
@@ -494,21 +502,87 @@ model Vehicle {
 model ActivityLog {
   id        String   @id @default(uuid())
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName  String?  // Stored as plain text for permanent immutable auditing
+  userRole  String?
   action    String
+  resource  String?  // e.g. TRIPS, PACKAGES, BOOKINGS, USERS
   details   String?
   ipAddress String?
+  browser   String?
+  os        String?
+  device    String?
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
 }
 
 model AuditLog {
   id        String   @id @default(uuid())
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   entity    String
   entityId  String
   action    String
   changes   String?
+  createdAt DateTime @default(now())
+}
+
+model RolePermission {
+  id          String   @id @default(uuid())
+  role        String   // SUPER_ADMIN, ADMIN, CONTENT_EDITOR, CUSTOMER_SUPPORT
+  resource    String   // TRIPS, PACKAGES, BOOKINGS, CUSTOMERS, GALLERY, REVIEWS, BLOG, COUPONS, PAYMENTS, ANALYTICS, SETTINGS, USERS
+  canView     Boolean  @default(true)
+  canCreate   Boolean  @default(false)
+  canEdit     Boolean  @default(false)
+  canDelete   Boolean  @default(false)
+  canApprove  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([role, resource])
+}
+
+model LoginHistory {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userEmail String
+  ipAddress String?
+  country   String?
+  city      String?
+  browser   String?
+  os        String?
+  device    String?
+  status    String   @default("SUCCESS") // SUCCESS, FAILED
+  createdAt DateTime @default(now())
+
+  @@index([userEmail])
+}
+
+model UserSession {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String   @unique
+  ipAddress    String?
+  browser      String?
+  os           String?
+  device       String?
+  isRevoked    Boolean  @default(false)
+  lastActiveAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+model AdminNotification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  type      String   @default("INFO") // USER_CREATED, USER_DELETED, ROLE_CHANGED, TRIP_DELETED, PRICE_CHANGED
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
