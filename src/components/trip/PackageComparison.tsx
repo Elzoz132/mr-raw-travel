@@ -116,8 +116,11 @@ export const PackageComparison: React.FC<PackageComparisonProps> = ({
     const raw = isArabic ? pkg.includedAr : isGerman ? pkg.includedDe : pkg.includedEn
     if (!raw) return []
     try {
-      return JSON.parse(raw)
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed.map(String)
+      return [raw]
     } catch {
+      if (raw.includes(',')) return raw.split(',').map((s) => s.trim()).filter(Boolean)
       return [raw]
     }
   }
@@ -126,8 +129,11 @@ export const PackageComparison: React.FC<PackageComparisonProps> = ({
     const raw = isArabic ? pkg.excludedAr : isGerman ? pkg.excludedDe : pkg.excludedEn
     if (!raw) return []
     try {
-      return JSON.parse(raw)
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed.map(String)
+      return [raw]
     } catch {
+      if (raw.includes(',')) return raw.split(',').map((s) => s.trim()).filter(Boolean)
       return [raw]
     }
   }

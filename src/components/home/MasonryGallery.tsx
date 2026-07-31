@@ -66,4 +66,3 @@ export const MasonryGallery: React.FC = () => {
     </section>
   )
 }
-

@@ -91,9 +91,33 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
   const excludedStr = isArabic ? trip.excludedAr : isGerman ? trip.excludedDe : trip.excludedEn
   const itineraryStr = isArabic ? trip.itineraryAr : isGerman ? trip.itineraryDe : trip.itineraryEn
 
-  const includedList: string[] = JSON.parse(includedStr || '[]')
-  const excludedList: string[] = JSON.parse(excludedStr || '[]')
-  const itineraryList: { time: string; title: string; desc: string }[] = JSON.parse(itineraryStr || '[]')
+  const safeParseList = (raw?: string | null): string[] => {
+    if (!raw) return []
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed.map(String)
+      if (typeof parsed === 'string') return [parsed]
+      return [raw]
+    } catch {
+      if (raw.includes(',')) return raw.split(',').map((s) => s.trim()).filter(Boolean)
+      return [raw]
+    }
+  }
+
+  const safeParseItinerary = (raw?: string | null): { time: string; title: string; desc: string }[] => {
+    if (!raw) return []
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed
+      return [{ time: '09:00 AM', title: raw, desc: '' }]
+    } catch {
+      return [{ time: '09:00 AM', title: raw, desc: '' }]
+    }
+  }
+
+  const includedList = safeParseList(includedStr)
+  const excludedList = safeParseList(excludedStr)
+  const itineraryList = safeParseItinerary(itineraryStr)
 
   return (
     <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">

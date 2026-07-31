@@ -37,11 +37,13 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
+  const draft = bookingDraft || { adults: 2, children: 0 }
+
   // Calculate Prices based on currency
-  const adultPrice = currency === 'EUR' ? (bookingDraft.priceAdultEur || 42) : currency === 'EGP' ? (bookingDraft.priceAdultEgp || 2200) : (bookingDraft.priceAdultUsd || 45)
-  const childPrice = currency === 'EUR' ? (bookingDraft.priceChildEur || 23) : currency === 'EGP' ? (bookingDraft.priceChildEgp || 1200) : (bookingDraft.priceChildUsd || 25)
+  const adultPrice = currency === 'EUR' ? (draft.priceAdultEur || 42) : currency === 'EGP' ? (draft.priceAdultEgp || 2200) : (draft.priceAdultUsd || 45)
+  const childPrice = currency === 'EUR' ? (draft.priceChildEur || 23) : currency === 'EGP' ? (draft.priceChildEgp || 1200) : (draft.priceChildUsd || 25)
   
-  const rawTotalPrice = (bookingDraft.adults || 2) * adultPrice + (bookingDraft.children || 0) * childPrice
+  const rawTotalPrice = (draft.adults || 2) * adultPrice + (draft.children || 0) * childPrice
   const totalPrice = Math.max(0, rawTotalPrice - discountAmount)
 
   const handleInputChange = (field: string, value: any) => {
