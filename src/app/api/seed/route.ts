@@ -25,7 +25,7 @@ export async function GET() {
         nameAr: 'سفاري وركوب الخيل',
         nameDe: 'Wüsten- & Pferdeausflüge',
         slug: 'desert-safari',
-        image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80',
+        image: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&w=1200&q=80',
         icon: 'Compass'
       }
     })
@@ -43,7 +43,7 @@ export async function GET() {
       }
     })
 
-    // 2. Insert Real Trip 1: Horse Riding Adventure (1000 EGP)
+    // 2. Real Trip 1: Horse Riding Adventure (1000 EGP)
     const horseTrip = await prisma.trip.upsert({
       where: { slug: 'horse-riding-desert-sea' },
       update: {
@@ -68,15 +68,24 @@ export async function GET() {
         priceChildEur: 11,
         priceChildEgp: 600,
         duration: '2 Hours',
+        pickupTime: '08:00 AM',
         location: 'Desert & Red Sea Beach, Hurghada',
         rating: 4.98,
         reviewCount: 84,
         isFeatured: true,
-        isPublished: true
+        isPublished: true,
+        includedEn: JSON.stringify(['Hotel Pickup & Return Transfers', 'Trained & Equipped Horses', 'Safety Helmets & Gear', 'Professional Accompanied Guide/Instructor', 'Complimentary Mineral Water']),
+        includedAr: JSON.stringify(['تنقلات من وإلى الفندق', 'خيل مدربة وجاهزة', 'معدات أمان وخوذة سلامة', 'مدرب مرافق محترف', 'مياه معدنية طوال الرحلة']),
+        includedDe: JSON.stringify(['Hoteltransfer', 'Pferde', 'Sicherheitsausrüstung', 'Reitlehrer', 'Wasser']),
+        excludedEn: 'Personal Expenses',
+        excludedAr: 'المصاريف الشخصية',
+        excludedDe: 'Persönliche Ausgaben',
+        itineraryEn: '1 Hour Desert Riding + 1 Hour Sea Swimming with Horses',
+        itineraryAr: 'ساعة ركوب في الصحراء + ساعة ركوب داخل مياه البحر',
+        itineraryDe: '1 Std Wüste + 1 Std Meer'
       }
     })
 
-    // Package for Horse Riding
     await prisma.tripPackage.upsert({
       where: { id: 'pkg-horse-1' },
       update: {
@@ -88,7 +97,7 @@ export async function GET() {
         id: 'pkg-horse-1',
         tripId: horseTrip.id,
         nameEn: 'Horse Riding (Desert & Sea)',
-        nameAr: 'باقة ركوب الخيل (صحراء + بحر)',
+        nameAr: 'باقة ركوب الخيل (صحراء + بحر - 1000 ج)',
         nameDe: 'Pferdereiten (Wüste & Meer)',
         descEn: 'Includes 1 hour desert riding, 1 hour sea swimming with horses, all safety equipment, instructor, mineral water, and hotel pickup.',
         descAr: 'برنامج ساعتين كاملة: ساعة ركوب بالصحراء + ساعة ركوب بالبحر، يشمل خيول مدربة ومدرب ومعدات السلامة ومياه وتنقلات الفندق.',
@@ -119,7 +128,7 @@ export async function GET() {
       }
     })
 
-    // 3. Insert Real Trip 2: Private Speed Boat (6500 EGP)
+    // 3. Real Trip 2: Private Speedboat Charter (6500 EGP)
     const speedBoatTrip = await prisma.trip.upsert({
       where: { slug: 'private-speed-boat-charter' },
       update: {
@@ -144,11 +153,21 @@ export async function GET() {
         priceChildEur: 0,
         priceChildEgp: 0,
         duration: '4 Hours',
+        pickupTime: '09:00 AM',
         location: 'Hurghada Red Sea',
         rating: 4.99,
         reviewCount: 62,
         isFeatured: true,
-        isPublished: true
+        isPublished: true,
+        includedEn: JSON.stringify(['Private Speedboat Charter (7 Guests Max)', 'Snorkeling Coral Reef Stop', 'Dolphin House Swimming Visit', 'White Island Sandbar Stop', 'Fresh Fruit Platter & Cold Juices', 'Snorkeling Equipment & Life Jackets']),
+        includedAr: JSON.stringify(['رحلة خاصة بالكامل اسبيد بوت (حتى 7 أفراد)', 'وقفة اسنوركلينج بالشعاب المرجانية', 'زيارة دولفين هاوس لسباحة الدلافين', 'وقفة على شاطئ الوايت ايلند', 'طبق فاكهة طازجة ومشروبات باردة ومنعشة', 'عدسات وزعانف وسترات نجاة السنوركلينج']),
+        includedDe: JSON.stringify(['Privatboot', 'Schnorcheln', 'Delfinhaus', 'White Island', 'Früchte & Getränke']),
+        excludedEn: 'Gratuities',
+        excludedAr: 'الإكراميات',
+        excludedDe: 'Trinkgelder',
+        itineraryEn: 'Dolphin House + White Island Sandbar + Snorkeling + Fruits & Drinks',
+        itineraryAr: 'دولفين هاوس + شاطئ الوايت ايلند + وقفة سنوركلينج + فاكهة ومشروبات',
+        itineraryDe: 'Delfinhaus + White Island + Schnorcheln'
       }
     })
 
@@ -163,7 +182,7 @@ export async function GET() {
         id: 'pkg-speedboat-1',
         tripId: speedBoatTrip.id,
         nameEn: 'Private Speedboat (4 Hours - Up to 7 Persons)',
-        nameAr: 'باقة اسبيد بوت خاص (4 ساعات - حتى 7 أفراد)',
+        nameAr: 'باقة اسبيد بوت خاص (4 ساعات - حتى 7 أفراد - 6500 ج)',
         nameDe: 'Privates Schnellboot (4 Std - bis 7 Personen)',
         descEn: 'Entire private speedboat charter for up to 7 guests. Includes Dolphin House, White Island, Snorkeling, Fruits & Refreshments.',
         descAr: 'إيجار اسبيد بوت خاص بالكامل لـ 7 أفراد شامل وقفة اسنوركلينج ودولفين هاوس ووايت ايلند وفاكهة ومشروبات.',
@@ -194,7 +213,7 @@ export async function GET() {
       }
     })
 
-    // 4. Insert Real Trip 3: Water Sports (Parasailing 700/1300, Banana 600, Sofa 600)
+    // 4. Real Trip 3: Water Sports (Parasailing 700/1300, Banana 600, Sofa 600)
     const waterSportsTrip = await prisma.trip.upsert({
       where: { slug: 'hurghada-water-sports-fun' },
       update: {},
@@ -215,15 +234,24 @@ export async function GET() {
         priceChildEur: 14,
         priceChildEgp: 600,
         duration: '15-30 Mins',
+        pickupTime: '10:00 AM',
         location: 'Hurghada Coast',
         rating: 4.95,
         reviewCount: 120,
         isFeatured: true,
-        isPublished: true
+        isPublished: true,
+        includedEn: JSON.stringify(['Life Jackets', 'Safety Equipment', 'Professional Captain']),
+        includedAr: JSON.stringify(['سترات النجاة لكل فرد', 'معدات أمان عالية الجودة', 'كابتن متخصص']),
+        includedDe: JSON.stringify(['Schwimmwesten', 'Sicherheitsausrüstung']),
+        excludedEn: 'Photo Album',
+        excludedAr: 'ألبوم الصور الفوتوغرافية',
+        excludedDe: 'Fotos',
+        itineraryEn: 'Parasailing / Banana / Sofa ride on water',
+        itineraryAr: 'جولة الألعاب المائية حسب الباقة المختارة',
+        itineraryDe: 'Wassersportfahrt'
       }
     })
 
-    // Packages for Water Sports
     await prisma.tripPackage.upsert({
       where: { id: 'pkg-parasailing-single' },
       update: { priceAdultEgp: 700, priceAdultUsd: 15, priceAdultEur: 14 },
@@ -336,7 +364,7 @@ export async function GET() {
       }
     })
 
-    // 5. Insert Real Trip 4: Orange Bay Yacht & Snorkeling (1200 EGP)
+    // 5. Real Trip 4: Orange Bay Yacht & Snorkeling (1200 EGP)
     const orangeBayTrip = await prisma.trip.upsert({
       where: { slug: 'orange-bay-island-yacht-cruise' },
       update: { priceAdultEgp: 1200, priceAdultUsd: 25, priceAdultEur: 23 },
@@ -357,11 +385,21 @@ export async function GET() {
         priceChildEur: 13,
         priceChildEgp: 700,
         duration: '8 Hours',
+        pickupTime: '08:00 AM',
         location: 'Orange Bay Island, Hurghada',
         rating: 4.97,
         reviewCount: 230,
         isFeatured: true,
-        isPublished: true
+        isPublished: true,
+        includedEn: JSON.stringify(['Orange Bay Island Beach Stay', '2 Guided Snorkeling Stops', 'Luxury Yacht Cruise & Sun Deck Access', 'Fresh Buffet Lunch with Seafood', 'Cold & Hot Unlimited Beverages', 'Full Snorkeling Masks & Fins Equipment', 'Air-Conditioned Hotel Transfers', 'Professional Crew & Guides']),
+        includedAr: JSON.stringify(['وقفة على جزيرة أورنج باي الاستوائية', 'وقفتين سنوركلينج في أماكن مختلفة للشعاب المرجانية', 'رحلة يخت فاخرة ومريحة', 'الغداء طازج ولذيذ بوفيه مفتوح', 'المشروبات باردة ومنعشة طوال اليوم', 'أدوات ومعدات السنوركلينج الكاملة', 'تنقلات مكيفة من وإلى الفندق', 'فريق عمل محترف لخدمتكم طوال اليوم']),
+        includedDe: JSON.stringify(['Insel Orange Bay', '2 Schnorchelstopps', 'Mittagsbuffet', 'Getränke', 'Hoteltransfer']),
+        excludedEn: 'Personal Purchases on Island',
+        excludedAr: 'المشتريات الشخصية على الجزيرة',
+        excludedDe: 'Persönliche Käufe',
+        itineraryEn: 'Orange Bay Island Beach + 2 Coral Reef Snorkeling Stops + Open Buffet Lunch + Watersports',
+        itineraryAr: 'وقفة جزيرة أورنج باي + وقفتين سنوركلينج + غداء بوفيه مأكولات بحرية + تنقلات',
+        itineraryDe: 'Orange Bay + 2 Schnorchelstopps + Mittagsbuffet'
       }
     })
 
