@@ -102,15 +102,17 @@ export const Navbar: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] group-hover:scale-105 transition-all">
-              <Crown className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-xl font-black text-white tracking-wider uppercase block">
+          <Link href="/" className="flex items-center gap-3 group">
+            <img
+              src="/images/logo.png"
+              alt="Mr.Raw Travel Official Logo"
+              className="h-12 w-auto object-contain group-hover:scale-105 transition-all filter drop-shadow-[0_0_12px_rgba(212,175,55,0.4)]"
+            />
+            <div className="hidden sm:block">
+              <span className="text-lg font-black text-white tracking-wider uppercase block leading-none">
                 MR.RAW
               </span>
-              <span className="text-[9px] font-bold text-[#D4AF37] tracking-widest uppercase block -mt-1">
+              <span className="text-[9px] font-bold text-[#D4AF37] tracking-widest uppercase block mt-1">
                 LUXURY TRAVEL
               </span>
             </div>

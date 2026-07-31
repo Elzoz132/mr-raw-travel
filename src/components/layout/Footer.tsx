@@ -52,16 +52,12 @@ export const Footer: React.FC = () => {
           {/* Column 1: Company Profile */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-3">
-              {footerCms.footerLogo && footerCms.footerLogo !== '/logo.png' ? (
-                <img src={footerCms.footerLogo} alt={footerCms.companyName} className="h-10 w-auto object-contain" />
-              ) : (
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E5C158] via-[#D4AF37] to-[#B8860B] p-[1px]">
-                  <div className="w-full h-full bg-[#0B0F17] rounded-[11px] flex items-center justify-center">
-                    <Crown className="w-5 h-5 text-[#D4AF37]" />
-                  </div>
-                </div>
-              )}
-              <span className="text-xl font-bold tracking-tight gold-gradient-text">
+              <img
+                src="/images/logo.png"
+                alt="Mr.Raw Travel Official Logo"
+                className="h-12 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]"
+              />
+              <span className="text-xl font-black tracking-tight gold-gradient-text">
                 {footerCms.companyName}
               </span>
             </Link>

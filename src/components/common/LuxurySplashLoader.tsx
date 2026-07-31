@@ -48,16 +48,14 @@ export const LuxurySplashLoader: React.FC = () => {
 
           <div className="relative z-10 flex flex-col items-center space-y-6 text-center">
             
-            {/* Crown Icon Badge */}
+            {/* Logo Badge */}
             <motion.div
               initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#E5C158] via-[#D4AF37] to-[#B8860B] p-[1px] shadow-[0_0_50px_rgba(212,175,55,0.4)]"
+              className="w-24 h-24 rounded-3xl bg-[#0B0F17] p-2 border border-[#D4AF37]/40 shadow-[0_0_50px_rgba(212,175,55,0.4)] flex items-center justify-center"
             >
-              <div className="w-full h-full bg-[#0B0F17] rounded-[23px] flex items-center justify-center">
-                <Crown className="w-10 h-10 text-[#D4AF37] animate-pulse" />
-              </div>
+              <img src="/images/logo.png" alt="Mr.Raw Travel Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(212,175,55,0.5)]" />
             </motion.div>
 
             {/* Brand Title */}
