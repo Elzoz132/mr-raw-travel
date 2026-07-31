@@ -29,6 +29,7 @@ export const AdminHeader: React.FC = () => {
     { href: '/admin/bookings', label: isArabic ? '📋 الحجوزات' : 'Bookings' },
     { href: '/admin/crm', label: isArabic ? '👥 العملاء' : 'Customers' },
     { href: '/admin/coupons', label: isArabic ? '🎟️ الخصومات' : 'Coupons' },
+    { href: '/admin/gateways', label: isArabic ? '💳 بوابات الدفع' : 'Payment Gateways' },
     { href: '/admin/settings', label: isArabic ? '⚙️ الإعدادات العامة' : 'Global Settings' },
   ]
 

@@ -44,6 +44,9 @@ export const metadata: Metadata = {
   },
 }
 
+import { LuxurySplashLoader } from '@/components/common/LuxurySplashLoader'
+import { PageTransition } from '@/components/common/PageTransition'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -53,13 +56,16 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${ibmArabic.variable}`}>
       <body className="bg-[#0B0F17] text-white min-h-screen flex flex-col antialiased relative">
         <SmoothScrollProvider>
+          <LuxurySplashLoader />
           <AmbientBackground />
           <ScrollProgressBar />
           <Pixels />
           <CustomCursor />
           <Navbar />
           <SearchModal />
-          <main className="flex-1 relative z-10">{children}</main>
+          <main className="flex-1 relative z-10">
+            <PageTransition>{children}</PageTransition>
+          </main>
           <FloatingWhatsAppWidget />
           <Footer />
         </SmoothScrollProvider>

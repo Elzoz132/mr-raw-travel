@@ -176,6 +176,24 @@ model TripPackage {
   excludedDe      String?  // JSON string array
 
   duration        String?  // e.g. "Full Day (8 Hours)"
+  startTime       String?  @default("08:00 AM")
+  endTime         String?  @default("04:00 PM")
+  minGuests       Int      @default(1)
+  maxGuests       Int      @default(30)
+
+  cancellationPolicyEn String?
+  cancellationPolicyAr String?
+  cancellationPolicyDe String?
+  meetingPointEn  String?
+  meetingPointAr  String?
+  meetingPointDe  String?
+  googleMapsUrl   String?
+
+  packageColor    String?  @default("#D4AF37")
+  packageIcon     String?  @default("Crown")
+
+  itinerarySteps  String?  // JSON string array of itinerary timeline objects
+
   availableDays   String?  // JSON string array e.g. ["MON", "WED", "FRI"]
   capacity        Int      @default(20)
 
@@ -190,13 +208,24 @@ model TripPackage {
   status          String   @default("ACTIVE") // ACTIVE, HIDDEN, ARCHIVED
 
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now()) @updatedAt
 
   bookings        Booking[]
   reviews         Review[]
 
   @@index([tripId])
   @@index([status])
+}
+
+model PaymentGateway {
+  id             String   @id @default(uuid())
+  key            String   @unique // STRIPE, PAYMOB, PAYPAL, VODAFONE_CASH, INSTAPAY, CASH
+  name           String
+  isEnabled      Boolean  @default(true)
+  instructionsEn String?
+  instructionsAr String?
+  instructionsDe String?
+  updatedAt      DateTime @default(now()) @updatedAt
 }
 
 model TripPricingRule {

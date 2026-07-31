@@ -3,7 +3,8 @@
 import React, { useState } from 'react'
 import { useAppStore } from '@/store/useStore'
 import { formatCurrencyPrice, Currency } from '@/lib/currency'
-import { Check, X, Crown, Sparkles } from 'lucide-react'
+import { PackageItineraryTimeline } from '@/components/trip/PackageItineraryTimeline'
+import { Check, X, Crown, Sparkles, MapPin } from 'lucide-react'
 
 export interface PackageData {
   id: string
@@ -35,6 +36,20 @@ export interface PackageData {
   excludedAr?: string | null
   excludedDe?: string | null
   duration?: string | null
+  startTime?: string | null
+  endTime?: string | null
+  minGuests?: number
+  maxGuests?: number
+  cancellationPolicyEn?: string | null
+  cancellationPolicyAr?: string | null
+  cancellationPolicyDe?: string | null
+  meetingPointEn?: string | null
+  meetingPointAr?: string | null
+  meetingPointDe?: string | null
+  googleMapsUrl?: string | null
+  packageColor?: string | null
+  packageIcon?: string | null
+  itinerarySteps?: string | null
   capacity: number
   photos?: string | null
   video?: string | null
@@ -231,6 +246,12 @@ export const PackageComparison: React.FC<PackageComparisonProps> = ({
                     </div>
                   </div>
 
+                  {/* Timing & Meeting Point */}
+                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between text-[11px] text-slate-300">
+                    <span>🕒 {pkg.startTime || '08:00 AM'} - {pkg.endTime || '04:00 PM'}</span>
+                    <span>👥 Max {pkg.capacity || 20} Seats</span>
+                  </div>
+
                   {/* Included Highlights */}
                   <div className="space-y-2 text-xs">
                     <span className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-wider block">
@@ -285,6 +306,44 @@ export const PackageComparison: React.FC<PackageComparisonProps> = ({
           })}
         </div>
       )}
+
+      {/* Selected Package Detailed Itinerary Timeline */}
+      {selectedPackageId && (() => {
+        const selectedPkg = packages.find((p) => p.id === selectedPackageId)
+        if (!selectedPkg) return null
+        let stepsArr = []
+        if ((selectedPkg as any).itinerarySteps) {
+          try {
+            stepsArr = JSON.parse((selectedPkg as any).itinerarySteps)
+          } catch {
+            stepsArr = []
+          }
+        }
+        return (
+          <div className="pt-6 border-t border-white/10 space-y-6">
+            <PackageItineraryTimeline steps={stepsArr} language={language} />
+
+            {(selectedPkg as any).googleMapsUrl && (
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#D4AF37]" />
+                  <span>
+                    Meeting Point & Pickup: <strong>{(selectedPkg as any).meetingPointEn || 'Hurghada Marina / Hotel Lobby'}</strong>
+                  </span>
+                </div>
+                <a
+                  href={(selectedPkg as any).googleMapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] font-bold hover:bg-[#D4AF37] hover:text-[#0B0F17] transition"
+                >
+                  View on Google Maps
+                </a>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* View Mode 2: Detailed Comparison Table */}
       {activeTab === 'table' && (
