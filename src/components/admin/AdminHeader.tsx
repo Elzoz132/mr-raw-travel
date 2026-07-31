@@ -42,11 +42,13 @@ export const AdminHeader: React.FC = () => {
         
         {/* Admin Badge */}
         <div className="flex items-center gap-3">
-          <img
-            src="/images/logo.png"
-            alt="Mr.Raw Logo"
-            className="h-10 w-auto object-contain filter drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]"
-          />
+          <div className="p-1 rounded-xl bg-gradient-to-br from-[#E5C158]/30 via-[#D4AF37]/20 to-[#B8860B]/10 border border-[#D4AF37]/40 shadow-[0_0_15px_rgba(212,175,55,0.25)]">
+            <img
+              src="/images/logo.png"
+              alt="Mr.Raw Logo"
+              className="h-9 w-auto object-contain rounded-lg"
+            />
+          </div>
           <div>
             <span className="text-sm font-black text-white block leading-none">MR.RAW BACKOFFICE CMS</span>
             <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-wider block mt-1">Executive Operations Hub</span>

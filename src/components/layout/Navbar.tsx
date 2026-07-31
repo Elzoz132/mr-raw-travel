@@ -105,13 +105,15 @@ export const Navbar: React.FC = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           
-          {/* Logo */}
+          {/* Chic Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <img
-              src="/images/logo.png"
-              alt="Mr.Raw Travel Official Logo"
-              className="h-12 w-auto object-contain group-hover:scale-105 transition-all filter drop-shadow-[0_0_12px_rgba(212,175,55,0.4)]"
-            />
+            <div className="relative p-1 rounded-2xl bg-gradient-to-br from-[#E5C158]/30 via-[#D4AF37]/20 to-[#B8860B]/10 border border-[#D4AF37]/40 shadow-[0_0_20px_rgba(212,175,55,0.25)] group-hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] group-hover:scale-105 transition-all duration-300">
+              <img
+                src="/images/logo.png"
+                alt="Mr.Raw Travel Official Logo"
+                className="h-11 w-auto object-contain rounded-xl"
+              />
+            </div>
             <div className="hidden sm:block">
               <span className="text-lg font-black text-white tracking-wider uppercase block leading-none">
                 MR.RAW

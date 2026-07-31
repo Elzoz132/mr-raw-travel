@@ -59,11 +59,13 @@ export const Footer: React.FC = () => {
           {/* Column 1: Company Profile */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-3">
-              <img
-                src="/images/logo.png"
-                alt="Mr.Raw Travel Official Logo"
-                className="h-12 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]"
-              />
+              <div className="p-1 rounded-2xl bg-gradient-to-br from-[#E5C158]/30 via-[#D4AF37]/20 to-[#B8860B]/10 border border-[#D4AF37]/40 shadow-[0_0_20px_rgba(212,175,55,0.25)]">
+                <img
+                  src="/images/logo.png"
+                  alt="Mr.Raw Travel Official Logo"
+                  className="h-11 w-auto object-contain rounded-xl"
+                />
+              </div>
               <span className="text-xl font-black tracking-tight gold-gradient-text">
                 {footerCms.companyName}
               </span>
