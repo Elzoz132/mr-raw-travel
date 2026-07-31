@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -140,6 +141,7 @@ export async function POST(req: Request) {
       }
     })
 
+    revalidatePath('/', 'layout')
     return NextResponse.json({ success: true, package: created })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to create package' }, { status: 500 })
@@ -170,6 +172,7 @@ export async function PUT(req: Request) {
           updatedAt: undefined
         }
       })
+      revalidatePath('/', 'layout')
       return NextResponse.json({ success: true, package: duplicated })
     }
 
@@ -224,6 +227,7 @@ export async function PUT(req: Request) {
       }
     })
 
+    revalidatePath('/', 'layout')
     return NextResponse.json({ success: true, package: updated })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to update package' }, { status: 500 })
@@ -240,6 +244,7 @@ export async function DELETE(req: Request) {
     }
 
     await prisma.tripPackage.delete({ where: { id } })
+    revalidatePath('/', 'layout')
     return NextResponse.json({ success: true })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to delete package' }, { status: 500 })

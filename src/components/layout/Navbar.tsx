@@ -90,6 +90,10 @@ export const Navbar: React.FC = () => {
     router.refresh()
   }
 
+  if (pathname.startsWith('/admin')) {
+    return null
+  }
+
   return (
     <>
       <header

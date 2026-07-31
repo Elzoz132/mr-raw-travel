@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getHomepageConfig, updateHomepageConfig } from '@/lib/cms'
 
 export const dynamic = 'force-dynamic'
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const updated = await updateHomepageConfig(body)
+    revalidatePath('/', 'layout')
     return NextResponse.json({ success: true, config: updated })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to update homepage config' }, { status: 500 })

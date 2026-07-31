@@ -6,11 +6,18 @@ import { useAppStore } from '@/store/useStore'
 import { defaultFooterConfig, FooterConfig } from '@/lib/cms'
 import { Crown, Phone, Mail, MapPin, ShieldCheck } from 'lucide-react'
 
+import { usePathname } from 'next/navigation'
+
 export const Footer: React.FC = () => {
+  const pathname = usePathname()
   const { language } = useAppStore()
   const isArabic = language === 'ar'
   const isGerman = language === 'de'
   const [footerCms, setFooterCms] = useState<FooterConfig>(defaultFooterConfig)
+
+  if (pathname.startsWith('/admin')) {
+    return null
+  }
 
   useEffect(() => {
     fetch('/api/admin/cms/footer')

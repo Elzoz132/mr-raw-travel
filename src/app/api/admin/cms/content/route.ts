@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
       create: { key, section, textEn, textAr, textDe }
     })
 
+    revalidatePath('/', 'layout')
     return NextResponse.json({ success: true, item })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to save site content' }, { status: 500 })

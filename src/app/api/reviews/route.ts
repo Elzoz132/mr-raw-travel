@@ -10,8 +10,17 @@ export async function GET(req: Request) {
     const email = searchParams.get('email')
     const tripId = searchParams.get('tripId')
 
+    // If no email, return list of approved public reviews for homepage testimonials & trip pages
     if (!email) {
-      return NextResponse.json({ isEligible: false, reason: 'Email parameter required' })
+      const reviews = await prisma.review.findMany({
+        where: {
+          status: 'APPROVED',
+          ...(tripId ? { tripId } : {})
+        },
+        orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+        take: 10
+      })
+      return NextResponse.json({ success: true, reviews })
     }
 
     // Check if user has an account
