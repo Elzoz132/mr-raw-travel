@@ -19,12 +19,17 @@ export const AdminHeader: React.FC = () => {
   }
 
   const navItems = [
-    { href: '/admin/dashboard', label: isArabic ? '📊 الإحصائيات' : 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/trips', label: isArabic ? '🌴 إدارة الباقات' : 'Manage Packages', icon: Palmtree },
-    { href: '/admin/crm', label: isArabic ? '👥 العملاء' : 'Customers', icon: Users },
-    { href: '/admin/coupons', label: isArabic ? '🎟️ أكواد الخصم' : 'Coupons', icon: Ticket },
-    { href: '/admin/bookings', label: isArabic ? '📋 الحجوزات' : 'Bookings', icon: ShoppingBag },
-    { href: '/admin/settings', label: isArabic ? '⚙️ الواتساب والإعدادات' : 'Settings', icon: Settings },
+    { href: '/admin/dashboard', label: isArabic ? '📊 الإحصائيات' : 'Dashboard' },
+    { href: '/admin/homepage', label: isArabic ? '🏠 الرئيسية' : 'Homepage CMS' },
+    { href: '/admin/content', label: isArabic ? '📝 النصوص واللغات' : 'Site Text CMS' },
+    { href: '/admin/footer', label: isArabic ? '🦶 الفوتر' : 'Footer CMS' },
+    { href: '/admin/packages', label: isArabic ? '🌴 الباقات والأسعار' : 'Packages & Pricing' },
+    { href: '/admin/reviews', label: isArabic ? '⭐ مراجعة التقييمات' : 'Review Moderation' },
+    { href: '/admin/gallery', label: isArabic ? '🖼️ معرض الصور' : 'Gallery CMS' },
+    { href: '/admin/bookings', label: isArabic ? '📋 الحجوزات' : 'Bookings' },
+    { href: '/admin/crm', label: isArabic ? '👥 العملاء' : 'Customers' },
+    { href: '/admin/coupons', label: isArabic ? '🎟️ الخصومات' : 'Coupons' },
+    { href: '/admin/settings', label: isArabic ? '⚙️ الإعدادات العامة' : 'Global Settings' },
   ]
 
   return (

@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useAppStore } from '@/store/useStore'
 import { dictionaries } from '@/lib/i18n/dictionaries'
+import { defaultHomepageConfig, HomepageConfig } from '@/lib/cms'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
 import { Search, Calendar, Users, Compass, ShieldCheck, Star, Award, Sparkles } from 'lucide-react'
 
@@ -16,6 +17,45 @@ export const HeroSection: React.FC = () => {
   const [date, setDate] = useState('')
   const [guests, setGuests] = useState('2')
   const [category, setCategory] = useState('all')
+  const [cmsConfig, setCmsConfig] = useState<HomepageConfig>(defaultHomepageConfig)
+
+  useEffect(() => {
+    fetch('/api/admin/cms/homepage')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.config) {
+          setCmsConfig(data.config)
+        }
+      })
+      .catch((err) => console.error('Failed to load live hero CMS:', err))
+  }, [])
+
+  const isArabic = language === 'ar'
+  const isGerman = language === 'de'
+
+  const heroBadge = isArabic
+    ? cmsConfig.heroBadgeAr || t.badge
+    : isGerman
+    ? cmsConfig.heroBadgeDe || t.badge
+    : cmsConfig.heroBadgeEn || t.badge
+
+  const heroTitle = isArabic
+    ? cmsConfig.heroTitleAr || `${t.titleLine1} ${t.titleLine2}`
+    : isGerman
+    ? cmsConfig.heroTitleDe || `${t.titleLine1} ${t.titleLine2}`
+    : cmsConfig.heroTitleEn || `${t.titleLine1} ${t.titleLine2}`
+
+  const heroSubtitle = isArabic
+    ? cmsConfig.heroSubtitleAr || t.subtitle
+    : isGerman
+    ? cmsConfig.heroSubtitleDe || t.subtitle
+    : cmsConfig.heroSubtitleEn || t.subtitle
+
+  const heroBtnText = isArabic
+    ? cmsConfig.heroBtnTextAr || t.exploreBtn
+    : isGerman
+    ? cmsConfig.heroBtnTextDe || t.exploreBtn
+    : cmsConfig.heroBtnTextEn || t.exploreBtn
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,13 +69,27 @@ export const HeroSection: React.FC = () => {
       <div className="absolute inset-0 bg-[#0B0F17] -z-20" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-[#D4AF37]/15 via-[#0EA5E9]/10 to-transparent blur-[140px] rounded-full pointer-events-none -z-10 animate-pulse duration-[10000ms]" />
       
-      {/* Background Image / Overlay Fallback */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center -z-20 opacity-35 scale-105 transition-transform duration-10000"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=2000&q=80')`
-        }}
-      />
+      {/* Background Media: VIDEO vs IMAGE */}
+      {cmsConfig.mediaType === 'VIDEO' && cmsConfig.videoUrl ? (
+        <video
+          autoPlay={cmsConfig.videoAutoPlay}
+          loop={cmsConfig.videoLoop}
+          muted={cmsConfig.videoMute}
+          playsInline
+          poster={cmsConfig.videoPoster || cmsConfig.imageUrl}
+          className="absolute inset-0 w-full h-full object-cover -z-20 opacity-40 scale-105"
+        >
+          <source src={cmsConfig.videoUrl} type="video/mp4" />
+        </video>
+      ) : (
+        <div 
+          className="absolute inset-0 bg-cover bg-center -z-20 opacity-35 scale-105 transition-transform duration-10000"
+          style={{
+            backgroundImage: `url('${cmsConfig.imageUrl || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=2000&q=80'}')`
+          }}
+        />
+      )}
+
       <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-[#0B0F17]/70 to-[#0B0F17]/30 -z-10" />
 
       <div className="max-w-6xl mx-auto w-full text-center space-y-8 relative z-10">
@@ -49,7 +103,7 @@ export const HeroSection: React.FC = () => {
         >
           <Sparkles className="w-4 h-4 text-[#D4AF37] animate-spin duration-[4000ms]" />
           <span className="text-xs font-semibold tracking-wide text-slate-200 uppercase">
-            {t.badge}
+            {heroBadge}
           </span>
         </motion.div>
 
@@ -61,8 +115,7 @@ export const HeroSection: React.FC = () => {
             transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white leading-[1.1]"
           >
-            {t.titleLine1} <br />
-            <span className="gold-gradient-text">{t.titleLine2}</span>
+            {heroTitle}
           </motion.h1>
           
           <motion.p
@@ -71,7 +124,7 @@ export const HeroSection: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="max-w-3xl mx-auto text-base sm:text-lg text-slate-300 font-normal leading-relaxed"
           >
-            {t.subtitle}
+            {heroSubtitle}
           </motion.p>
         </div>
 
@@ -145,7 +198,7 @@ export const HeroSection: React.FC = () => {
                 className="w-full py-3.5 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(212,175,55,0.4)]"
               >
                 <Search className="w-4 h-4" />
-                {t.searchBtn}
+                {heroBtnText}
               </LuxuryButton>
             </div>
 
@@ -177,3 +230,4 @@ export const HeroSection: React.FC = () => {
     </section>
   )
 }
+

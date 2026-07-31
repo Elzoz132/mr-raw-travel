@@ -25,9 +25,23 @@ interface TripBookingWidgetProps {
     bookedSeats: number
     schedules?: Array<{ id: string; date: Date; availableSeats: number }>
   }
+  selectedPackage?: {
+    id: string
+    nameEn: string
+    nameAr: string
+    nameDe: string
+    priceAdultUsd: number
+    priceChildUsd: number
+    priceAdultEur: number
+    priceChildEur: number
+    priceAdultEgp: number
+    priceChildEgp: number
+    priceAdultGbp?: number
+    priceChildGbp?: number
+  } | null
 }
 
-export const TripBookingWidget: React.FC<TripBookingWidgetProps> = ({ trip }) => {
+export const TripBookingWidget: React.FC<TripBookingWidgetProps> = ({ trip, selectedPackage }) => {
   const router = useRouter()
   const { currency, setCurrency, language, updateBookingDraft, wishlist, toggleWishlist } = useAppStore()
   const isArabic = language === 'ar'
@@ -38,18 +52,27 @@ export const TripBookingWidget: React.FC<TripBookingWidgetProps> = ({ trip }) =>
   const [adults, setAdults] = useState(2)
   const [children, setChildren] = useState(0)
 
-  // Calculate prices based on selected currency
+  // Calculate prices based on selected package or base trip prices
+  const activeAdultUsd = selectedPackage ? selectedPackage.priceAdultUsd : trip.priceAdultUsd
+  const activeChildUsd = selectedPackage ? selectedPackage.priceChildUsd : trip.priceChildUsd
+  const activeAdultEur = selectedPackage ? selectedPackage.priceAdultEur : trip.priceAdultEur
+  const activeChildEur = selectedPackage ? selectedPackage.priceChildEur : trip.priceChildEur
+  const activeAdultEgp = selectedPackage ? selectedPackage.priceAdultEgp : trip.priceAdultEgp
+  const activeChildEgp = selectedPackage ? selectedPackage.priceChildEgp : trip.priceChildEgp
+  const activeAdultGbp = selectedPackage ? (selectedPackage.priceAdultGbp || Math.round(selectedPackage.priceAdultUsd * 0.78)) : (trip.priceAdultGbp || Math.round(trip.priceAdultUsd * 0.78))
+  const activeChildGbp = selectedPackage ? (selectedPackage.priceChildGbp || Math.round(selectedPackage.priceChildUsd * 0.78)) : (trip.priceChildGbp || Math.round(trip.priceChildUsd * 0.78))
+
   const getPrices = () => {
     switch (currency) {
       case 'EUR':
-        return { adult: trip.priceAdultEur, child: trip.priceChildEur }
+        return { adult: activeAdultEur, child: activeChildEur }
       case 'GBP':
-        return { adult: trip.priceAdultGbp || Math.round(trip.priceAdultUsd * 0.78), child: trip.priceChildGbp || Math.round(trip.priceChildUsd * 0.78) }
+        return { adult: activeAdultGbp, child: activeChildGbp }
       case 'EGP':
-        return { adult: trip.priceAdultEgp, child: trip.priceChildEgp }
+        return { adult: activeAdultEgp, child: activeChildEgp }
       case 'USD':
       default:
-        return { adult: trip.priceAdultUsd, child: trip.priceChildUsd }
+        return { adult: activeAdultUsd, child: activeChildUsd }
     }
   }
 
@@ -63,12 +86,12 @@ export const TripBookingWidget: React.FC<TripBookingWidgetProps> = ({ trip }) =>
       tripId: trip.id,
       tripTitle: isArabic ? (trip.titleAr || trip.titleEn) : trip.titleEn,
       tripCover: trip.coverImage,
-      priceAdultUsd: trip.priceAdultUsd,
-      priceChildUsd: trip.priceChildUsd,
-      priceAdultEur: trip.priceAdultEur,
-      priceChildEur: trip.priceChildEur,
-      priceAdultEgp: trip.priceAdultEgp,
-      priceChildEgp: trip.priceChildEgp,
+      priceAdultUsd: activeAdultUsd,
+      priceChildUsd: activeChildUsd,
+      priceAdultEur: activeAdultEur,
+      priceChildEur: activeChildEur,
+      priceAdultEgp: activeAdultEgp,
+      priceChildEgp: activeChildEgp,
       tripDate: date,
       adults,
       children,

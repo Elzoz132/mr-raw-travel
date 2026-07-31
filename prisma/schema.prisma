@@ -127,6 +127,7 @@ model Trip {
   deletedAt       DateTime?
 
   images          TripImage[]
+  packages        TripPackage[]
   bookings        Booking[]
   reviews         Review[]
   schedules       TripSchedule[]
@@ -136,6 +137,66 @@ model Trip {
   @@index([categoryId])
   @@index([isPublished])
   @@index([isFeatured])
+}
+
+model TripPackage {
+  id              String   @id @default(uuid())
+  tripId          String
+  trip            Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  nameEn          String
+  nameAr          String
+  nameDe          String
+  descEn          String?
+  descAr          String?
+  descDe          String?
+
+  priceAdultUsd   Float
+  priceChildUsd   Float
+  priceAdultEur   Float
+  priceChildEur   Float
+  priceAdultEgp   Float
+  priceChildEgp   Float
+  priceAdultGbp   Float    @default(38.0)
+  priceChildGbp   Float    @default(20.0)
+
+  oldPriceAdultUsd Float?
+  oldPriceAdultEur Float?
+  oldPriceAdultEgp Float?
+  oldPriceAdultGbp Float?
+
+  discountPercent Int      @default(0)
+  currency        String   @default("USD")
+
+  includedEn      String?  // JSON string array
+  includedAr      String?  // JSON string array
+  includedDe      String?  // JSON string array
+  excludedEn      String?  // JSON string array
+  excludedAr      String?  // JSON string array
+  excludedDe      String?  // JSON string array
+
+  duration        String?  // e.g. "Full Day (8 Hours)"
+  availableDays   String?  // JSON string array e.g. ["MON", "WED", "FRI"]
+  capacity        Int      @default(20)
+
+  photos          String?  // JSON string array of URLs
+  video           String?  // Video URL or JSON
+  badge           String?  // e.g. "BEST VALUE", "VIP CHARTER"
+  isPopular       Boolean  @default(false)
+  isRecommended   Boolean  @default(false)
+  isBestSeller    Boolean  @default(false)
+  
+  order           Int      @default(0)
+  status          String   @default("ACTIVE") // ACTIVE, HIDDEN, ARCHIVED
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bookings        Booking[]
+  reviews         Review[]
+
+  @@index([tripId])
+  @@index([status])
 }
 
 model TripPricingRule {
@@ -157,6 +218,7 @@ model TripImage {
   trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
   url       String
   caption   String?
+  mediaType String   @default("IMAGE") // IMAGE, VIDEO, PANORAMA_360, THUMBNAIL, COVER
   order     Int      @default(0)
   createdAt DateTime @default(now())
 }
@@ -192,6 +254,8 @@ model Booking {
   user            User?         @relation(fields: [userId], references: [id])
   tripId          String
   trip            Trip          @relation(fields: [tripId], references: [id])
+  packageId       String?
+  package         TripPackage?  @relation(fields: [packageId], references: [id])
   scheduleId      String?
   schedule        TripSchedule? @relation(fields: [scheduleId], references: [id])
   
@@ -228,6 +292,7 @@ model Booking {
   passengers      BookingPassenger[]
   payments        Payment[]
   receipts        PaymentReceipt[]
+  reviews         Review[]
 
   @@index([bookingNumber])
   @@index([userId])
@@ -277,33 +342,57 @@ model PaymentReceipt {
 }
 
 model Review {
-  id        String   @id @default(uuid())
-  tripId    String
-  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
-  author    String
-  country   String   @default("Germany")
-  rating    Int      @default(5)
-  title     String?
-  comment   String
-  avatar    String?
-  isVerified Boolean @default(true)
-  createdAt DateTime @default(now())
+  id          String       @id @default(uuid())
+  tripId      String
+  trip        Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  packageId   String?
+  package     TripPackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  bookingId   String?
+  booking     Booking?     @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id])
+  
+  author      String
+  country     String       @default("Germany")
+  rating      Int          @default(5)
+  title       String?
+  comment     String
+  avatar      String?
+  photos      String?      // JSON string array of review photos
+  
+  travelDate  DateTime?
+  isVerified  Boolean      @default(true)
+  status      String       @default("PENDING") // APPROVED, PENDING, REJECTED, HIDDEN
+  isPinned    Boolean      @default(false)
+  isFeatured  Boolean      @default(false)
+  adminReply  String?
+  isAnonymous Boolean      @default(false)
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
 
   @@index([tripId])
+  @@index([status])
 }
 
 model GalleryItem {
-  id        String   @id @default(uuid())
-  titleEn   String
-  titleAr   String
-  titleDe   String
-  category  String   @default("SEA")
-  url       String
-  location  String   @default("Hurghada")
-  mediaType String   @default("IMAGE") // IMAGE, VIDEO, 360, DRONE
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  titleEn     String
+  titleAr     String
+  titleDe     String
+  category    String   @default("SEA")
+  url         String
+  location    String   @default("Hurghada")
+  mediaType   String   @default("IMAGE") // IMAGE, VIDEO, 360, DRONE
+  order       Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  altTextEn   String?
+  altTextAr   String?
+  altTextDe   String?
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+  @@index([isFeatured])
 }
 
 model BlogPost {
@@ -400,3 +489,18 @@ model Settings {
   value         String
   updatedAt     DateTime @updatedAt
 }
+
+model SiteContent {
+  id        String   @id @default(uuid())
+  key       String   @unique // e.g. "home.hero.title" or "footer.description"
+  section   String   @default("GENERAL") // HOME, FOOTER, FAQ, TESTIMONIALS, CONTACT, ABOUT, TRIPS, CATEGORIES, SPECIAL_OFFERS, BLOG, 404, BOOKING, CONFIRMATION
+  textEn    String
+  textAr    String
+  textDe    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([section])
+  @@index([key])
+}
+

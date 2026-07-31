@@ -29,7 +29,8 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
     where: { slug },
     include: {
       images: { orderBy: { order: 'asc' } },
-      reviews: { orderBy: { createdAt: 'desc' } },
+      packages: { where: { status: 'ACTIVE' }, orderBy: { order: 'asc' } },
+      reviews: { where: { status: 'APPROVED' }, orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }] },
       category: true,
       schedules: { where: { status: 'OPEN' }, orderBy: { date: 'asc' } }
     }

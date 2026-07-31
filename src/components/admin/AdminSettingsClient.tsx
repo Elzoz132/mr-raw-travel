@@ -4,132 +4,235 @@ import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useStore'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
-import { Phone, MessageSquare, Check, Settings } from 'lucide-react'
+import { uploadMedia } from '@/lib/cloudinary'
+import { Settings, Phone, Mail, Globe, Search, ShieldAlert, Upload, Check } from 'lucide-react'
 
 export const AdminSettingsClient: React.FC = () => {
   const { language } = useAppStore()
   const isArabic = language === 'ar'
 
-  const [whatsappNumber, setWhatsappNumber] = useState('01070657476')
-  const [loading, setLoading] = useState(false)
+  const [settings, setSettings] = useState<Record<string, string>>({
+    site_name: 'Mr.Raw Travel',
+    site_logo: '/logo.png',
+    site_favicon: '/favicon.ico',
+    seo_title: 'Mr.Raw Travel | #1 Rated Luxury Excursions in Hurghada',
+    seo_desc: 'Book VIP private yachts, Giftun island sea trips, mega desert quad safaris, and ancient Luxor guided tours in Hurghada.',
+    seo_keywords: 'Hurghada excursions, Giftun island, VIP yacht charter, quad safari, Luxor tour',
+    google_analytics_id: 'G-XXXXXXXXXX',
+    meta_pixel_id: '1234567890',
+    google_maps_key: '',
+    whatsapp_number: '01070657476',
+    support_email: 'info@mrrawtravel.com',
+    default_currency: 'USD',
+    maintenance_mode: 'false'
+  })
+
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    fetch('/api/admin/settings')
+    fetch('/api/settings')
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.settings?.whatsapp_number) {
-          setWhatsappNumber(data.settings.whatsapp_number)
+        if (data.success && data.settings) {
+          setSettings((prev) => ({ ...prev, ...data.settings }))
         }
       })
       .catch((err) => console.error(err))
+      .finally(() => setLoading(false))
   }, [])
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setSaving(true)
     setSaved(false)
 
     try {
-      const res = await fetch('/api/admin/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'whatsapp_number', value: whatsappNumber })
-      })
+      // Save all setting keys
+      const promises = Object.entries(settings).map(([key, value]) =>
+        fetch('/api/admin/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, value })
+        })
+      )
 
-      const data = await res.json()
-      if (res.ok && data.success) {
-        setSaved(true)
-        setTimeout(() => setSaved(false), 4000)
-      }
+      await Promise.all(promises)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 4000)
     } catch (err) {
-      console.error(err)
+      console.error('Failed to save settings:', err)
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
-  const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '')
-  const formattedWaUrl = `https://wa.me/${cleanNumber.startsWith('0') ? '2' + cleanNumber : cleanNumber}`
-
   return (
-    <div className="pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-      
-      {/* Unified Admin Header */}
+    <div className="min-h-screen bg-[#0B0F17] text-white pb-20">
       <AdminHeader />
 
-      {/* Title */}
-      <div className="border-b border-white/10 pb-6">
-        <span className="text-xs font-bold uppercase tracking-widest text-[#D4AF37]">
-          {isArabic ? 'إعدادات المنصة ووسائل التواصل' : 'PLATFORM & SUPPORT CONFIGURATION'}
-        </span>
-        <h1 className="text-3xl font-black text-white mt-1">
-          {isArabic ? 'تعديل رقم الواتساب الرسمي والدعم الفني' : 'Manage Official Support WhatsApp Number'}
-        </h1>
-      </div>
-
-      {saved && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-2">
-          <Check className="w-4 h-4" />
-          <span>{isArabic ? 'تم حفظ رقم الواتساب الرسمي وتطبيقه على كافة أجزاء الموقع وحسابات العملاء بنجاح!' : 'Official WhatsApp number updated successfully across the entire system!'}</span>
-        </div>
-      )}
-
-      {/* WhatsApp Configuration Panel */}
-      <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 space-y-6 max-w-2xl">
-        <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-            <MessageSquare className="w-6 h-6" />
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        
+        {/* Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div>
-            <h3 className="text-lg font-bold text-white">
-              {isArabic ? 'رقم الواتساب الرسمي لخدمة العملاء' : 'Official WhatsApp Customer Support Number'}
-            </h3>
-            <p className="text-xs text-slate-400">
-              {isArabic ? 'هذا الرقم سيظهر للعملاء في الباقات وحسابات العملاء والزر العائم للدردشة المباشرة.' : 'This number will be used across client dashboards, booking vouchers, and floating chat widgets.'}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-bold uppercase tracking-wider mb-2">
+              <Settings className="w-3.5 h-3.5" />
+              {isArabic ? 'الإعدادات العامة للشركة والمنصة' : 'Enterprise Global Settings'}
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              {isArabic ? 'إعدادات الموقع، SEO، والتتبع الإحصائي' : 'Global Platform & SEO Configuration'}
+            </h1>
+            <p className="text-xs text-slate-400 mt-1">
+              {isArabic
+                ? 'إدارة اسم المنصة، اللوجو، الفافيكون، إعدادات محركات البحث SEO، كود التحليلات Google Analytics، ورقم الواتساب.'
+                : 'Configure platform branding, SEO meta tags, tracking pixels, WhatsApp API, and maintenance mode.'}
             </p>
           </div>
+
+          <LuxuryButton onClick={handleSaveSettings} disabled={saving} variant="gold" size="md">
+            {saving ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : (isArabic ? 'حفظ الإعدادات العامة' : 'Save Global Settings')}
+          </LuxuryButton>
         </div>
 
-        <form onSubmit={handleSaveSettings} className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-300 block">
-              {isArabic ? 'رقم الهاتف (الواتساب)' : 'WhatsApp Phone Number'}
-            </label>
-            <div className="relative">
-              <Phone className="w-4 h-4 text-emerald-400 absolute left-4 top-3.5" />
+        {saved && (
+          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center gap-2">
+            <Check className="w-4 h-4" />
+            <span>{isArabic ? 'تم حفظ كافة الإعدادات العامة وتطبيقها بنجاح!' : 'Global platform settings updated successfully!'}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveSettings} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Section 1: Branding & Identity */}
+          <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 space-y-4 text-xs">
+            <h3 className="text-lg font-bold text-white border-l-4 border-[#D4AF37] pl-3">
+              Branding & Identity
+            </h3>
+
+            <div className="space-y-1.5">
+              <label className="text-slate-300 font-semibold">Site Name</label>
               <input
                 type="text"
-                value={whatsappNumber}
-                onChange={(e) => setWhatsappNumber(e.target.value)}
-                placeholder="e.g. 01070657476"
-                className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-white font-mono text-sm focus:outline-none focus:border-emerald-400"
+                value={settings.site_name}
+                onChange={(e) => setSettings({ ...settings, site_name: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-semibold">Logo Image URL</label>
+                <input
+                  type="text"
+                  value={settings.site_logo}
+                  onChange={(e) => setSettings({ ...settings, site_logo: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-semibold">Favicon Icon URL</label>
+                <input
+                  type="text"
+                  value={settings.site_favicon}
+                  onChange={(e) => setSettings({ ...settings, site_favicon: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-slate-300 font-semibold">Official Support Email</label>
+              <input
+                type="email"
+                value={settings.support_email}
+                onChange={(e) => setSettings({ ...settings, support_email: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-slate-300 font-semibold">Official WhatsApp Number</label>
+              <input
+                type="text"
+                value={settings.whatsapp_number}
+                onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white font-mono font-bold text-emerald-400"
               />
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-            <span className="text-[11px] font-bold text-slate-400 block uppercase">
-              {isArabic ? 'معاينة رابط الدردشة المباشر (Direct Link Preview):' : 'Direct Link Preview:'}
-            </span>
-            <a
-              href={formattedWaUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-mono font-bold text-emerald-400 hover:underline block truncate"
-            >
-              {formattedWaUrl}
-            </a>
+          {/* Section 2: SEO & Analytics */}
+          <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 space-y-4 text-xs">
+            <h3 className="text-lg font-bold text-white border-l-4 border-[#D4AF37] pl-3">
+              SEO & Analytics Tracking
+            </h3>
+
+            <div className="space-y-1.5">
+              <label className="text-slate-300 font-semibold">Default Meta Title</label>
+              <input
+                type="text"
+                value={settings.seo_title}
+                onChange={(e) => setSettings({ ...settings, seo_title: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-slate-300 font-semibold">Meta Description</label>
+              <textarea
+                rows={3}
+                value={settings.seo_desc}
+                onChange={(e) => setSettings({ ...settings, seo_desc: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-semibold">Google Analytics ID</label>
+                <input
+                  type="text"
+                  value={settings.google_analytics_id}
+                  onChange={(e) => setSettings({ ...settings, google_analytics_id: e.target.value })}
+                  placeholder="G-XXXXXXXXXX"
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-semibold">Meta Pixel ID</label>
+                <input
+                  type="text"
+                  value={settings.meta_pixel_id}
+                  onChange={(e) => setSettings({ ...settings, meta_pixel_id: e.target.value })}
+                  placeholder="1234567890"
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Maintenance Mode Toggle */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div>
+                <span className="font-bold text-white block">Maintenance Mode</span>
+                <span className="text-[10px] text-slate-400">Temporarily disable public bookings during system updates</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.maintenance_mode === 'true'}
+                onChange={(e) => setSettings({ ...settings, maintenance_mode: e.target.checked ? 'true' : 'false' })}
+                className="accent-[#D4AF37] w-5 h-5"
+              />
+            </div>
+
           </div>
 
-          <div className="pt-2 flex justify-end">
-            <LuxuryButton type="submit" disabled={loading} variant="gold" size="md">
-              {loading ? (isArabic ? 'جاري الحفظ...' : 'Saving...') : (isArabic ? 'حفظ وتحديث الرقم' : 'Save WhatsApp Number')}
-            </LuxuryButton>
-          </div>
         </form>
-      </div>
 
+      </div>
     </div>
   )
 }

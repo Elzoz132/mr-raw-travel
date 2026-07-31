@@ -1,17 +1,22 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { useAppStore } from '@/store/useStore'
 import { dictionaries } from '@/lib/i18n/dictionaries'
 import { TripBookingWidget } from '@/components/trip/TripBookingWidget'
+import { PackageComparison, PackageData } from '@/components/trip/PackageComparison'
+import { VerifiedReviewModal } from '@/components/trip/VerifiedReviewModal'
 import { 
   Clock, 
   MapPin, 
   Star, 
   CheckCircle2, 
   XCircle, 
-  ChevronRight
+  ChevronRight,
+  ShieldCheck,
+  MessageSquarePlus,
+  BadgeCheck
 } from 'lucide-react'
 
 interface TripDetailClientViewProps {
@@ -51,7 +56,19 @@ interface TripDetailClientViewProps {
     itineraryDe: string
     category?: { nameEn: string; nameAr: string; nameDe: string } | null
     images: Array<{ id: string; url: string; caption?: string | null }>
-    reviews: Array<{ id: string; author: string; country: string; rating: number; comment: string }>
+    packages?: PackageData[]
+    reviews: Array<{
+      id: string
+      author: string
+      country: string
+      rating: number
+      title?: string | null
+      comment: string
+      isVerified?: boolean
+      packageName?: string | null
+      travelDate?: string | Date | null
+      adminReply?: string | null
+    }>
   }
 }
 
@@ -59,6 +76,12 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
   const { language } = useAppStore()
   const isArabic = language === 'ar'
   const isGerman = language === 'de'
+
+  const [selectedPackage, setSelectedPackage] = useState<PackageData | null>(
+    trip.packages && trip.packages.length > 0 ? trip.packages[0] : null
+  )
+
+  const [isReviewModalOpen, setReviewModalOpen] = useState(false)
 
   const title = isArabic ? trip.titleAr : isGerman ? trip.titleDe : trip.titleEn
   const desc = isArabic ? trip.descAr : isGerman ? trip.descDe : trip.descEn
@@ -137,6 +160,15 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
         </div>
       </div>
 
+      {/* TRIP PACKAGES COMPARISON SECTION */}
+      {trip.packages && trip.packages.length > 0 && (
+        <PackageComparison
+          packages={trip.packages}
+          selectedPackageId={selectedPackage?.id || null}
+          onSelectPackage={(pkg) => setSelectedPackage(pkg)}
+        />
+      )}
+
       {/* Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
         
@@ -156,7 +188,7 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
               <div>
                 <span className="text-slate-400 block">{isArabic ? 'مدة الرحلة' : 'Duration'}</span>
                 <span className="font-bold text-white flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-[#D4AF37]" /> {trip.duration}
+                  <Clock className="w-3.5 h-3.5 text-[#D4AF37]" /> {selectedPackage?.duration || trip.duration}
                 </span>
               </div>
               <div>
@@ -166,7 +198,7 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
               <div>
                 <span className="text-slate-400 block">{isArabic ? 'أقصى عدد ركاب' : 'Max Seats'}</span>
                 <span className="font-bold text-white">
-                  {isArabic ? `${trip.maxSeats.toLocaleString('ar-EG')} مسافر` : `${trip.maxSeats} Travelers`}
+                  {isArabic ? `${(selectedPackage?.capacity || trip.maxSeats).toLocaleString('ar-EG')} مسافر` : `${selectedPackage?.capacity || trip.maxSeats} Travelers`}
                 </span>
               </div>
               <div>
@@ -239,17 +271,31 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
 
           {/* Reviews Section */}
           <div className="glass-panel rounded-3xl p-8 space-y-6">
-            <h3 className="text-xl font-bold text-white border-l-4 border-[#D4AF37] pl-3">
-              {isArabic ? `تقييمات المسافرين (${trip.reviews.length.toLocaleString('ar-EG')})` : `Customer Reviews (${trip.reviews.length})`}
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <h3 className="text-xl font-bold text-white border-l-4 border-[#D4AF37] pl-3">
+                {isArabic ? `تقييمات المسافرين الموثقة (${trip.reviews.length.toLocaleString('ar-EG')})` : `Verified Guest Reviews (${trip.reviews.length})`}
+              </h3>
+
+              <button
+                onClick={() => setReviewModalOpen(true)}
+                className="px-4 py-2 rounded-xl gold-gradient-btn text-xs font-bold text-[#0B0F17] flex items-center gap-1.5 self-start sm:self-auto"
+              >
+                <MessageSquarePlus className="w-4 h-4" />
+                <span>{isArabic ? 'أضف تقييم موثق' : 'Write Verified Review'}</span>
+              </button>
+            </div>
 
             <div className="space-y-4">
               {trip.reviews.map((rev) => (
-                <div key={rev.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                <div key={rev.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-white">{rev.author}</span>
                       <span className="text-xs text-slate-400">({rev.country})</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+                        <BadgeCheck className="w-3 h-3" />
+                        {isArabic ? 'عميل موثق' : 'Verified Guest'}
+                      </span>
                     </div>
                     <div className="flex items-center text-amber-400 text-xs">
                       <Star className="w-3.5 h-3.5 fill-current" />
@@ -258,7 +304,21 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
                       </span>
                     </div>
                   </div>
+
+                  {rev.title && (
+                    <h5 className="text-xs font-bold text-[#D4AF37]">{rev.title}</h5>
+                  )}
+
                   <p className="text-xs text-slate-300 italic">"{rev.comment}"</p>
+
+                  {rev.adminReply && (
+                    <div className="p-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-xs text-slate-200 space-y-1">
+                      <span className="font-bold text-[#D4AF37] block">
+                        {isArabic ? 'رد إدارة مستر راو:' : 'Mr.Raw Operations Management Response:'}
+                      </span>
+                      <p>{rev.adminReply}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -268,11 +328,20 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
 
         {/* Right Column: Sticky Booking Widget */}
         <div className="lg:col-span-1 lg:sticky lg:top-28">
-          <TripBookingWidget trip={trip} />
+          <TripBookingWidget trip={trip} selectedPackage={selectedPackage} />
         </div>
 
       </div>
 
+      {/* Verified Review Submission Modal */}
+      <VerifiedReviewModal
+        tripId={trip.id}
+        tripTitle={title}
+        isOpen={isReviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+      />
+
     </div>
   )
 }
+
