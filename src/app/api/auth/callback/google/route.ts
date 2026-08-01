@@ -17,7 +17,8 @@ export async function GET(req: Request) {
   const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'mr-raw-travel.vercel.app'
   const protoHeader = req.headers.get('x-forwarded-proto')
   const protocol = protoHeader ? protoHeader : (host.includes('localhost') ? 'http' : 'https')
-  const redirectUri = `${protocol}://${host}/api/auth/callback/google`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${baseUrl.replace(/\/$/, '')}/api/auth/callback/google`
 
   if (!code) {
     return NextResponse.redirect(`${protocol}://${host}?auth_error=no_code`)
