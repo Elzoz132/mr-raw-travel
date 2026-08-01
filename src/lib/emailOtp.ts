@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import { prisma } from '@/lib/db'
+import { prisma, withDbRetry } from '@/lib/db'
 
 // In-Memory OTP Store (Email -> { otp, expiresAt })
 const otpStore = new Map<string, { otp: string; expiresAt: number; name?: string; password?: string }>()
@@ -54,8 +54,8 @@ export async function sendOtpEmail(email: string, name: string, otpCode: string)
   let gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '').trim()
 
   try {
-    const userSetting = await prisma.settings.findUnique({ where: { key: 'gmail_user' } })
-    const passSetting = await prisma.settings.findUnique({ where: { key: 'gmail_app_password' } })
+    const userSetting = await withDbRetry(() => prisma.settings.findUnique({ where: { key: 'gmail_user' } }))
+    const passSetting = await withDbRetry(() => prisma.settings.findUnique({ where: { key: 'gmail_app_password' } }))
     if (userSetting?.value?.trim()) gmailUser = userSetting.value.trim()
     if (passSetting?.value?.trim()) gmailPass = passSetting.value.trim()
   } catch (e) {}
