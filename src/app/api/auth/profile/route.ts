@@ -22,7 +22,7 @@ export async function GET() {
     } else if (adminSession?.value === 'authenticated') {
       email = 'admin@mrrawtravel.com'
     } else {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, authenticated: false, user: null }, { status: 200 })
     }
 
     let user = await prisma.user.findFirst({
@@ -59,20 +59,25 @@ export async function PUT(req: Request) {
     const adminSession = cookieStore.get(ADMIN_COOKIE_NAME)
 
     let session: any = null
-    let email = 'admin@mrrawtravel.com'
+    let email = ''
 
     if (sessionCookie?.value) {
       try {
         session = JSON.parse(sessionCookie.value)
-        email = session.email || email
+        email = session.email || ''
       } catch {}
     } else if (adminSession?.value === 'authenticated') {
       email = 'admin@mrrawtravel.com'
-    } else {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await req.json()
+    if (body.email) {
+      email = body.email.toLowerCase().trim()
+    }
+
+    if (!email && !sessionCookie?.value && adminSession?.value !== 'authenticated') {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
     const { name, phone, whatsApp, country, nationality, avatar, currentPassword, newPassword } = body
 
     let user = await prisma.user.findFirst({

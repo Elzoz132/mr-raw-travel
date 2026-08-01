@@ -9,7 +9,7 @@ import { ArrowLeft, ArrowRight, ShieldCheck, CheckCircle2, Upload, Ticket } from
 
 export default function BookingPage() {
   const router = useRouter()
-  const { bookingDraft, currency, language } = useAppStore()
+  const { bookingDraft, currency, language, currentUser } = useAppStore()
   const isArabic = language === 'ar'
 
   const [step, setStep] = useState(1)
@@ -27,6 +27,36 @@ export default function BookingPage() {
     receiptUrl: '',
     specialRequests: ''
   })
+
+  // Auto-fill logged in customer details
+  React.useEffect(() => {
+    if (currentUser) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || currentUser.name || '',
+        email: prev.email || currentUser.email || '',
+        phone: prev.phone || (currentUser as any).phone || '',
+        whatsApp: prev.whatsApp || (currentUser as any).whatsApp || (currentUser as any).phone || '',
+        nationality: prev.nationality || (currentUser as any).nationality || 'Egypt'
+      }))
+    } else {
+      fetch('/api/auth/me')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.authenticated && data.user) {
+            setFormData((prev) => ({
+              ...prev,
+              fullName: prev.fullName || data.user.name || '',
+              email: prev.email || data.user.email || '',
+              phone: prev.phone || data.user.phone || '',
+              whatsApp: prev.whatsApp || data.user.whatsApp || data.user.phone || '',
+              nationality: prev.nationality || data.user.nationality || 'Egypt'
+            }))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [currentUser])
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('')
@@ -352,7 +382,14 @@ export default function BookingPage() {
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
-                  <label className="font-bold text-slate-300">{isArabic ? 'البريد الإلكتروني (إجباري) *' : 'Email Address *'}</label>
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-slate-300">{isArabic ? 'البريد الإلكتروني (إجباري) *' : 'Email Address *'}</label>
+                    {formData.email && (
+                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        ✓ {isArabic ? 'تم التعبئة تلقائياً من حسابك' : 'Auto-filled from account'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="email"
                     placeholder="zeyad@example.com"
