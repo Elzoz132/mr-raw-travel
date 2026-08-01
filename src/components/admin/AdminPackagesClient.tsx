@@ -530,6 +530,169 @@ export const AdminPackagesClient: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Included & Excluded Items (السعر يشمل والسعر لا يشمل) */}
+                <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5 text-xs">
+                  <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
+                    تفاصيل ما يشمله وما لا يشمله السعر (Includes & Excludes)
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-emerald-400 font-bold block mb-1">✓ السعر يشمل (اكتب كل عنصر في سطر جديد)</label>
+                      <textarea
+                        rows={4}
+                        placeholder={`رحلة خاصة اسبيد بوت (تتسع حتى 7 أفراد)\nوقفة اسنوركلينج بالشعاب المرجانية\nدولفين هاوس للسباحة مع الدلافين\nوقفة على شاطئ الوايت ايلند\nفاكهة ومشروبات طازجة باردة ومنعشة\nأدوات السنوركلينج وسترات النجاة`}
+                        value={(() => {
+                          if (!editingPkg.includedAr) return ''
+                          try {
+                            const parsed = JSON.parse(editingPkg.includedAr)
+                            return Array.isArray(parsed) ? parsed.join('\n') : editingPkg.includedAr
+                          } catch {
+                            return editingPkg.includedAr
+                          }
+                        })()}
+                        onChange={(e) => {
+                          const lines = e.target.value.split('\n').filter(s => s.trim())
+                          setEditingPkg({
+                            ...editingPkg,
+                            includedAr: JSON.stringify(lines),
+                            includedEn: JSON.stringify(lines)
+                          })
+                        }}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-emerald-500/30 text-white focus:outline-none focus:border-emerald-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-rose-400 font-bold block mb-1">✕ السعر لا يشمل (اكتب كل عنصر في سطر جديد)</label>
+                      <textarea
+                        rows={4}
+                        placeholder={`المصاريف الشخصية\nالإكراميات`}
+                        value={(() => {
+                          if (!editingPkg.excludedAr) return ''
+                          try {
+                            const parsed = JSON.parse(editingPkg.excludedAr)
+                            return Array.isArray(parsed) ? parsed.join('\n') : editingPkg.excludedAr
+                          } catch {
+                            return editingPkg.excludedAr
+                          }
+                        })()}
+                        onChange={(e) => {
+                          const lines = e.target.value.split('\n').filter(s => s.trim())
+                          setEditingPkg({
+                            ...editingPkg,
+                            excludedAr: JSON.stringify(lines),
+                            excludedEn: JSON.stringify(lines)
+                          })
+                        }}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-rose-500/30 text-white focus:outline-none focus:border-rose-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Itinerary Timeline Builder (جدول ومراحل الرحلة والبرنامج) */}
+                <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
+                      جدول ومراحل الرحلة والبرنامج (Itinerary & Steps Timeline)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        let currentSteps: any[] = []
+                        if (editingPkg.itinerarySteps) {
+                          try {
+                            currentSteps = typeof editingPkg.itinerarySteps === 'string' ? JSON.parse(editingPkg.itinerarySteps) : editingPkg.itinerarySteps
+                          } catch {
+                            currentSteps = []
+                          }
+                        }
+                        const newStep = { time: '09:00 AM', titleAr: 'مرحلة جديدة', titleEn: 'New Step', descAr: 'تفاصيل المرحلة' }
+                        setEditingPkg({ ...editingPkg, itinerarySteps: JSON.stringify([...currentSteps, newStep]) })
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0B0F17] font-bold text-xs flex items-center gap-1 hover:bg-[#E5C158] transition"
+                    >
+                      <span>+ إضافة مرحلة جديدة للجدول</span>
+                    </button>
+                  </div>
+
+                  {/* List of Steps */}
+                  <div className="space-y-3 pt-2">
+                    {(() => {
+                      let steps: any[] = []
+                      if (editingPkg.itinerarySteps) {
+                        try {
+                          steps = typeof editingPkg.itinerarySteps === 'string' ? JSON.parse(editingPkg.itinerarySteps) : editingPkg.itinerarySteps
+                        } catch {
+                          steps = []
+                        }
+                      }
+
+                      if (steps.length === 0) {
+                        return <span className="text-slate-400 block">لا يوجد مراحل مضافة في جدول هذه الرحلة حالياً. اضغط "إضافة مرحلة جديدة للجدول".</span>
+                      }
+
+                      return steps.map((step: any, idx: number) => (
+                        <div key={idx} className="p-3 rounded-xl bg-white/5 border border-white/10 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                          <div className="sm:col-span-2">
+                            <label className="text-[10px] text-slate-400 block">الوقت (Time)</label>
+                            <input
+                              type="text"
+                              value={step.time || '09:00 AM'}
+                              onChange={(e) => {
+                                const updated = [...steps]
+                                updated[idx] = { ...updated[idx], time: e.target.value }
+                                setEditingPkg({ ...editingPkg, itinerarySteps: JSON.stringify(updated) })
+                              }}
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-black/30 border border-white/10 text-white font-bold text-xs"
+                            />
+                          </div>
+                          <div className="sm:col-span-5">
+                            <label className="text-[10px] text-slate-400 block">عنوان الخطوة بالعربية (AR)</label>
+                            <input
+                              type="text"
+                              placeholder="مثال: دولفين هاوس + شاطئ الوايت ايلند"
+                              value={step.titleAr || step.title || ''}
+                              onChange={(e) => {
+                                const updated = [...steps]
+                                updated[idx] = { ...updated[idx], titleAr: e.target.value, titleEn: e.target.value }
+                                setEditingPkg({ ...editingPkg, itinerarySteps: JSON.stringify(updated) })
+                              }}
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-black/30 border border-white/10 text-white text-xs"
+                            />
+                          </div>
+                          <div className="sm:col-span-4">
+                            <label className="text-[10px] text-slate-400 block">التفاصيل والأنشطة</label>
+                            <input
+                              type="text"
+                              placeholder="مثال: السباحة مع الدلافين ووقفة سنوركلينج"
+                              value={step.descAr || step.desc || ''}
+                              onChange={(e) => {
+                                const updated = [...steps]
+                                updated[idx] = { ...updated[idx], descAr: e.target.value, descEn: e.target.value }
+                                setEditingPkg({ ...editingPkg, itinerarySteps: JSON.stringify(updated) })
+                              }}
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-black/30 border border-white/10 text-white text-xs"
+                            />
+                          </div>
+                          <div className="sm:col-span-1 flex items-center justify-end pt-3 sm:pt-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const filtered = steps.filter((_, i) => i !== idx)
+                                setEditingPkg({ ...editingPkg, itinerarySteps: JSON.stringify(filtered) })
+                              }}
+                              className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition"
+                              title="حذف هذه الخطوة"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    })()}
+                  </div>
+                </div>
+
                 {/* Duration & Meeting Point Details (مدة الرحلة، المواعيد، مكان التنقلات) */}
                 <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5 text-xs">
                   <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">

@@ -87,9 +87,19 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
   const desc = isArabic ? trip.descAr : isGerman ? trip.descDe : trip.descEn
   const catName = isArabic ? trip.category?.nameAr : isGerman ? trip.category?.nameDe : trip.category?.nameEn
 
-  const includedStr = isArabic ? trip.includedAr : isGerman ? trip.includedDe : trip.includedEn
-  const excludedStr = isArabic ? trip.excludedAr : isGerman ? trip.excludedDe : trip.excludedEn
-  const itineraryStr = isArabic ? trip.itineraryAr : isGerman ? trip.itineraryDe : trip.itineraryEn
+  const includedStr = isArabic
+    ? (selectedPackage?.includedAr || trip.includedAr)
+    : isGerman
+    ? (selectedPackage?.includedDe || trip.includedDe)
+    : (selectedPackage?.includedEn || trip.includedEn)
+
+  const excludedStr = isArabic
+    ? (selectedPackage?.excludedAr || trip.excludedAr)
+    : isGerman
+    ? (selectedPackage?.excludedDe || trip.excludedDe)
+    : (selectedPackage?.excludedEn || trip.excludedEn)
+
+  const itineraryStr = selectedPackage?.itinerarySteps || (isArabic ? trip.itineraryAr : isGerman ? trip.itineraryDe : trip.itineraryEn)
 
   const safeParseList = (raw?: string | null): string[] => {
     if (!raw) return []
@@ -99,6 +109,7 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
       if (typeof parsed === 'string') return [parsed]
       return [raw]
     } catch {
+      if (raw.includes('\n')) return raw.split('\n').map((s) => s.trim()).filter(Boolean)
       if (raw.includes(',')) return raw.split(',').map((s) => s.trim()).filter(Boolean)
       return [raw]
     }
@@ -108,7 +119,13 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
     if (!raw) return []
     try {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed
+      if (Array.isArray(parsed)) {
+        return parsed.map((step: any) => ({
+          time: step.time || step.timeEn || step.timeAr || '09:00 AM',
+          title: isArabic ? (step.titleAr || step.title || step.titleEn) : (step.titleEn || step.title || step.titleAr),
+          desc: isArabic ? (step.descAr || step.desc || step.descEn || '') : (step.descEn || step.desc || step.descAr || '')
+        }))
+      }
       return [{ time: '09:00 AM', title: raw, desc: '' }]
     } catch {
       return [{ time: '09:00 AM', title: raw, desc: '' }]
@@ -118,6 +135,16 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
   const includedList = safeParseList(includedStr)
   const excludedList = safeParseList(excludedStr)
   const itineraryList = safeParseItinerary(itineraryStr)
+
+  let packagePhotos: string[] = []
+  if (selectedPackage?.photos) {
+    try {
+      packagePhotos = typeof selectedPackage.photos === 'string' ? JSON.parse(selectedPackage.photos) : selectedPackage.photos
+    } catch {
+      packagePhotos = [selectedPackage.photos]
+    }
+  }
+  const displayPhotos = packagePhotos.length > 0 ? packagePhotos : (trip.images?.map(i => i.url) || [])
 
   return (
     <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
@@ -161,22 +188,22 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-96 rounded-3xl overflow-hidden shadow-2xl border border-white/10">
         <div className="md:col-span-2 relative h-full">
           <img
-            src={trip.coverImage}
+            src={displayPhotos[0] || trip.coverImage}
             alt={title}
             className="w-full h-full object-cover"
           />
         </div>
         <div className="hidden md:grid grid-rows-2 gap-4 h-full">
-          {trip.images.slice(0, 2).map((img, i) => (
+          {(displayPhotos.length > 1 ? displayPhotos.slice(1, 3) : trip.images?.map(i => i.url).slice(0, 2) || []).map((imgUrl, i) => (
             <div key={i} className="relative h-full overflow-hidden">
               <img
-                src={img.url}
-                alt={img.caption || title}
+                src={imgUrl}
+                alt={`${title} photo ${i + 2}`}
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
               />
             </div>
           ))}
-          {trip.images.length < 2 && (
+          {displayPhotos.length <= 1 && (trip.images?.length || 0) < 2 && (
             <div className="relative h-full bg-[#0F172A] flex items-center justify-center text-slate-500 text-xs">
               {isArabic ? 'صور إضافية قريباً' : 'More Photos Coming Soon'}
             </div>
