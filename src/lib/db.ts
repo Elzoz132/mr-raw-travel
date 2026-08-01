@@ -10,4 +10,5 @@ export const prisma =
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// Always cache Prisma singleton instance across serverless invocations to avoid connection pool exhaustion
+globalForPrisma.prisma = prisma

@@ -8,7 +8,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const trips = await prisma.trip.findMany({
-      where: { isPublished: true },
       select: { slug: true, updatedAt: true }
     })
 
