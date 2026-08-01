@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/db'
+import { ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -102,8 +103,22 @@ export async function GET(req: Request) {
       maxAge: 60 * 60 * 24 * 7
     })
 
-    // If ADMIN, redirect straight to executive admin dashboard
-    if (user.role === 'ADMIN') {
+    cookieStore.set('user_role', user.role || 'CUSTOMER', {
+      httpOnly: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7
+    })
+
+    // If ADMIN, set admin cookie & redirect straight to executive admin dashboard
+    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+      cookieStore.set(ADMIN_COOKIE_NAME, 'authenticated', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7
+      })
       return NextResponse.redirect(`${protocol}://${host}/admin/dashboard`)
     }
 

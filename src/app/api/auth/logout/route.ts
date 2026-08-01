@@ -7,6 +7,7 @@ export async function POST() {
     const cookieStore = await cookies()
     cookieStore.delete(ADMIN_COOKIE_NAME)
     cookieStore.delete('user_session')
+    cookieStore.delete('user_role')
 
     return NextResponse.json({ success: true })
   } catch (err: any) {

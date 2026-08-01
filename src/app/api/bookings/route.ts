@@ -8,6 +8,7 @@ export async function POST(req: Request) {
     const body = await req.json()
 
     const tripId = body.tripId
+    const packageId = body.packageId || null
     const tripDate = body.tripDate || new Date().toISOString()
     const adults = Number(body.adults) || 1
     const children = Number(body.children) || 0
@@ -28,6 +29,9 @@ export async function POST(req: Request) {
     const receiptUrl = body.receiptUrl || ''
     const emergencyContact = body.emergencyContact || ''
     const specialNotes = body.specialNotes || body.specialRequests || ''
+
+    const selectedAddons = body.selectedAddons ? (typeof body.selectedAddons === 'string' ? body.selectedAddons : JSON.stringify(body.selectedAddons)) : null
+    const isCustomPackage = Boolean(body.isCustomPackage)
 
     // Fetch default trip if tripId is not a valid UUID
     let targetTripId = tripId
@@ -58,6 +62,9 @@ export async function POST(req: Request) {
       data: {
         bookingNumber,
         tripId: targetTripId,
+        packageId,
+        selectedAddons,
+        isCustomPackage,
         tripDate: new Date(tripDate),
         adults,
         children,

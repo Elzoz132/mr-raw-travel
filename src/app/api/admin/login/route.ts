@@ -16,6 +16,19 @@ export async function POST(req: Request) {
         maxAge: 60 * 60 * 24 * 7 // 7 days
       })
 
+      cookieStore.set('user_session', JSON.stringify({ name: 'Executive Admin', email: 'admin@mrrawtravel.com', role: 'SUPER_ADMIN' }), {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7
+      })
+      cookieStore.set('user_role', 'SUPER_ADMIN', {
+        httpOnly: false,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7
+      })
+
       return NextResponse.json({ success: true })
     }
 

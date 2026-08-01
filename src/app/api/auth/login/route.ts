@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const cleanEmail = email.toLowerCase().trim()
 
     // Check if logging in as Master Admin
-    if (cleanEmail === 'admin@mrrawtravel.com' || cleanEmail === 'admin' || password === 'admin123') {
+    if ((cleanEmail === 'admin@mrrawtravel.com' || cleanEmail === 'admin') && password === 'admin123') {
       const cookieStore = await cookies()
       cookieStore.set(ADMIN_COOKIE_NAME, 'authenticated', {
         httpOnly: true,
@@ -31,9 +31,16 @@ export async function POST(req: Request) {
         maxAge: 60 * 60 * 24 * 7
       })
 
+      cookieStore.set('user_role', 'ADMIN', {
+        httpOnly: false,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7
+      })
+
       return NextResponse.json({
         success: true,
-        user: { name: 'Mr.Raw Executive Admin', email: cleanEmail, role: 'ADMIN' },
+        user: { name: 'Mr.Raw Executive Admin', email: 'admin@mrrawtravel.com', role: 'ADMIN' },
         redirect: '/admin/dashboard'
       })
     }
@@ -62,6 +69,13 @@ export async function POST(req: Request) {
 
     cookieStore.set('user_session', JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role }), {
       httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7
+    })
+
+    cookieStore.set('user_role', user.role || 'CUSTOMER', {
+      httpOnly: false,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7

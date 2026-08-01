@@ -137,6 +137,9 @@ export default function BookingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tripId: bookingDraft.tripId || '1',
+          packageId: bookingDraft.packageId || undefined,
+          selectedAddons: bookingDraft.selectedAddons || undefined,
+          isCustomPackage: bookingDraft.isCustomPackage || false,
           tripDate: bookingDraft.tripDate || new Date().toISOString(),
           adults: bookingDraft.adults || 2,
           children: bookingDraft.children || 0,
@@ -238,6 +241,25 @@ export default function BookingPage() {
                   <h4 className="text-base font-bold text-white">
                     {bookingDraft.tripTitle || (isArabic ? 'رحلة جزيرة جفتون الفاخرة' : 'Giftun Island Paradise Cruise')}
                   </h4>
+                  {(bookingDraft.packageNameAr || bookingDraft.packageNameEn) && (
+                    <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] text-[11px] font-bold">
+                      📦 {isArabic ? (bookingDraft.packageNameAr || bookingDraft.packageNameEn) : (bookingDraft.packageNameEn || bookingDraft.packageNameAr)}
+                    </span>
+                  )}
+                  {bookingDraft.selectedAddons && bookingDraft.selectedAddons.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">
+                        {isArabic ? 'الإضافات المشمولة:' : 'Selected Addons:'}
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {bookingDraft.selectedAddons.map((add, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-emerald-400 font-semibold">
+                            + {isArabic ? add.nameAr : add.nameEn}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <span className="text-xs text-[#D4AF37] font-semibold block mt-1">
                     {isArabic ? 'تاريخ المغادرة:' : 'Date:'} {bookingDraft.tripDate || new Date().toISOString().split('T')[0]}
                   </span>

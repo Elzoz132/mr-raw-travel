@@ -50,23 +50,29 @@ export const Navbar: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (isMounted) {
-          if (data.authenticated && data.user) {
-            setCurrentUser(data.user)
-          } else {
-            setCurrentUser(null)
+    const updateAuth = () => {
+      fetch('/api/auth/me')
+        .then((res) => res.json())
+        .then((data) => {
+          if (isMounted) {
+            if (data.authenticated && data.user) {
+              setCurrentUser(data.user)
+            } else {
+              setCurrentUser(null)
+            }
           }
-        }
-      })
-      .catch(() => {
-        if (isMounted) setCurrentUser(null)
-      })
+        })
+        .catch(() => {
+          if (isMounted) setCurrentUser(null)
+        })
+    }
+
+    updateAuth()
+    window.addEventListener('auth-state-change', updateAuth)
 
     return () => {
       isMounted = false
+      window.removeEventListener('auth-state-change', updateAuth)
     }
   }, [pathname])
 

@@ -55,9 +55,15 @@ export function middleware(req: NextRequest) {
 
   // Only intercept /admin/* routes excluding login & access-denied
   if (pathname.startsWith('/admin') && pathname !== '/admin/login' && pathname !== '/admin/access-denied') {
-    const userRoleCookie = req.cookies.get('user_role')?.value || 'SUPER_ADMIN' // Fallback for active session
+    const adminSession = req.cookies.get('mrraw_admin_session')?.value
+    const userRoleCookie = req.cookies.get('user_role')?.value
 
-    const allowedRoutes = ROLE_ROUTE_PERMISSIONS[userRoleCookie] || ROLE_ROUTE_PERMISSIONS.SUPER_ADMIN
+    if (!adminSession && (!userRoleCookie || userRoleCookie === 'CUSTOMER')) {
+      return NextResponse.redirect(new URL('/admin/login', req.url))
+    }
+
+    const effectiveRole = userRoleCookie && ROLE_ROUTE_PERMISSIONS[userRoleCookie] ? userRoleCookie : 'SUPER_ADMIN'
+    const allowedRoutes = ROLE_ROUTE_PERMISSIONS[effectiveRole] || ROLE_ROUTE_PERMISSIONS.SUPER_ADMIN
     const isAllowed = allowedRoutes.some((route) => pathname.startsWith(route))
 
     if (!isAllowed) {

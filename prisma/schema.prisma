@@ -225,6 +225,25 @@ model TripPackage {
   @@index([status])
 }
 
+model TripAddon {
+  id           String   @id @default(uuid())
+  nameEn       String
+  nameAr       String
+  nameDe       String
+  descEn       String?
+  descAr       String?
+  descDe       String?
+  category     String   @default("GENERAL") // SAFARI, WATER_SPORTS, YACHT, HORSE, GENERAL
+  priceEgp     Float
+  priceUsd     Float    @default(0)
+  priceEur     Float    @default(0)
+  icon         String?  @default("Sparkles")
+  isCustomable Boolean  @default(true)
+  isAddon      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model PaymentGateway {
   id             String   @id @default(uuid())
   key            String   @unique // STRIPE, PAYMOB, PAYPAL, VODAFONE_CASH, INSTAPAY, CASH
@@ -315,6 +334,8 @@ model Booking {
   children        Int           @default(0)
   currency        String        @default("USD") // USD, EUR, EGP, GBP
   totalPrice      Float
+  selectedAddons  String?       // JSON string array of selected addon objects {id, nameAr, priceEgp, etc}
+  isCustomPackage Boolean       @default(false)
   
   paymentMethod   String        // CASH, INSTAPAY, VODAFONE_CASH, BANK_TRANSFER, CARD
   paymentStatus   String        @default("PENDING") // PENDING, WAITING_REVIEW, APPROVED, REJECTED, REFUNDED

@@ -52,6 +52,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           throw new Error(data.error || 'Invalid credentials')
         }
 
+        window.dispatchEvent(new Event('auth-state-change'))
         onClose()
         if (onSuccess) onSuccess()
         router.push(data.redirect || '/customer')
@@ -73,6 +74,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           throw new Error(data.error || 'Signup failed.')
         }
 
+        window.dispatchEvent(new Event('auth-state-change'))
         onClose()
         if (onSuccess) onSuccess()
         router.push('/customer')
@@ -89,6 +91,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         const data = await res.json()
         if (!res.ok || !data.success) {
+          if (res.status === 401) {
+            throw new Error(isArabic ? 'يرجى تسجيل الدخول لحسابك أولاً لتغيير كلمة السر.' : 'Please sign in to your account first to update password.')
+          }
           throw new Error(data.error || 'Failed to change password.')
         }
 

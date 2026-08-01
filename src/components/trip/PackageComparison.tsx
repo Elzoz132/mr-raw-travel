@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useStore'
 import { formatCurrencyPrice, Currency } from '@/lib/currency'
 import { PackageItineraryTimeline } from '@/components/trip/PackageItineraryTimeline'
@@ -72,10 +72,44 @@ export const PackageComparison: React.FC<PackageComparisonProps> = ({
   selectedPackageId,
   onSelectPackage
 }) => {
-  const { language, currency } = useAppStore()
+  const { language, currency, updateBookingDraft, bookingDraft } = useAppStore()
   const isArabic = language === 'ar'
   const isGerman = language === 'de'
   const [activeTab, setActiveTab] = useState<'cards' | 'table'>('cards')
+  const [addons, setAddons] = useState<any[]>([])
+  const [selectedAddons, setSelectedAddons] = useState<any[]>(bookingDraft.selectedAddons || [])
+
+  useEffect(() => {
+    fetch('/api/addons')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.addons) {
+          setAddons(data.addons)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const toggleAddon = (addon: any) => {
+    let next: any[] = []
+    if (selectedAddons.some((a) => a.id === addon.id)) {
+      next = selectedAddons.filter((a) => a.id !== addon.id)
+    } else {
+      next = [
+        ...selectedAddons,
+        {
+          id: addon.id,
+          nameEn: addon.nameEn,
+          nameAr: addon.nameAr,
+          priceEgp: addon.priceEgp,
+          priceUsd: addon.priceUsd,
+          priceEur: addon.priceEur
+        }
+      ]
+    }
+    setSelectedAddons(next)
+    updateBookingDraft({ selectedAddons: next })
+  }
 
   if (!packages || packages.length === 0) return null
 
@@ -328,6 +362,51 @@ export const PackageComparison: React.FC<PackageComparisonProps> = ({
         return (
           <div className="pt-6 border-t border-white/10 space-y-6">
             <PackageItineraryTimeline steps={stepsArr} language={language} />
+
+            {/* ADD-ONS UPGRADE SECTION */}
+            {addons && addons.length > 0 && (
+              <div className="p-6 rounded-2xl bg-white/5 border border-[#D4AF37]/30 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                    {isArabic ? 'تخصيص وترقية الباقة (إضافة أنشطة ومزايا إضافية)' : 'Customize & Upgrade Package (Add Extra Features)'}
+                  </h4>
+                  {selectedAddons.length > 0 && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#D4AF37] text-[#0B0F17] text-[10px] font-black uppercase">
+                      +{selectedAddons.length} {isArabic ? 'إضافات' : 'Addons'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400">
+                  {isArabic
+                    ? 'يمكنك تزويد الباقة بالأنشطة والمميزات التي ترغب فيها وحساب السعر تلقائياً:'
+                    : 'You can upgrade your package with extra activities priced individually by admin:'}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+                  {addons.slice(0, 9).map((add) => {
+                    const isChecked = selectedAddons.some((a) => a.id === add.id)
+                    const addonPrice = currency === 'EUR' ? (add.priceEur || Math.round(add.priceEgp / 52)) : currency === 'EGP' ? add.priceEgp : (add.priceUsd || Math.round(add.priceEgp / 48))
+                    return (
+                      <div
+                        key={add.id}
+                        onClick={() => toggleAddon(add)}
+                        className={`cursor-pointer p-3 rounded-xl border flex items-center justify-between text-xs font-semibold transition-all ${
+                          isChecked
+                            ? 'bg-[#D4AF37]/20 border-[#D4AF37] text-white shadow-md'
+                            : 'bg-white/5 border-white/10 text-slate-300 hover:border-white/20'
+                        }`}
+                      >
+                        <span className="truncate pr-2">{isArabic ? add.nameAr : add.nameEn}</span>
+                        <span className="font-bold text-[#D4AF37] shrink-0">
+                          +{formatCurrencyPrice(addonPrice, currency as Currency, language)}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {(selectedPkg as any).googleMapsUrl && (
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">

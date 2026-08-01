@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { PopularTrips } from '@/components/home/PopularTrips'
+import { CustomPackageBuilder } from '@/components/trip/CustomPackageBuilder'
 import { JsonLd } from '@/components/seo/JsonLd'
 
 export const revalidate = 60
@@ -53,7 +54,7 @@ export default async function TripsCatalogPage({ searchParams }: TripsPageProps)
   }))
 
   return (
-    <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+    <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16">
       
       {/* Title */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
@@ -61,15 +62,18 @@ export default async function TripsCatalogPage({ searchParams }: TripsPageProps)
           EXPLORE ALL RED SEA EXCURSIONS
         </span>
         <h1 className="text-3xl sm:text-5xl font-black text-white">
-          Luxury Hurghada Excursions & Charters
+          رحلات وباقات مستر رو ترافيل الحصرية
         </h1>
         <p className="text-sm text-slate-300">
-          Handcrafted private yacht cruises, Giftun paradise island sea trips, quad safari adventures, and historical day tours to Luxor.
+          تصفح كافة رحلات السفاري، الألعاب المائية، اليخت الخاص، ركوب الخيل، وأورانج باي بالأسعار الحقيقية.
         </p>
       </div>
 
       {/* Catalog Grid */}
       <PopularTrips trips={mappedTrips} />
+
+      {/* CUSTOM PACKAGE BUILDER SECTION */}
+      <CustomPackageBuilder />
 
     </div>
   )

@@ -7,6 +7,10 @@ export interface BookingDraft {
   tripId?: string
   tripTitle?: string
   tripCover?: string
+  packageId?: string
+  packageNameEn?: string
+  packageNameAr?: string
+  packageNameDe?: string
   priceAdultUsd?: number
   priceChildUsd?: number
   priceAdultEur?: number
@@ -28,6 +32,15 @@ export interface BookingDraft {
   nationality?: string
   emergencyContact?: string
   specialNotes?: string
+  selectedAddons?: Array<{
+    id: string
+    nameEn: string
+    nameAr: string
+    priceEgp: number
+    priceUsd: number
+    priceEur: number
+  }>
+  isCustomPackage?: boolean
   paymentMethod?: string
   receiptUrl?: string
 }

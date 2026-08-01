@@ -16,7 +16,7 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
 
   const booking = await prisma.booking.findUnique({
     where: { id },
-    include: { trip: true, receipts: true }
+    include: { trip: true, package: true, receipts: true }
   })
 
   if (!booking) notFound()
@@ -75,6 +75,32 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
             <h3 className="text-lg font-bold text-white">
               {booking.trip.titleEn}
             </h3>
+
+            {booking.package && (
+              <div className="inline-block px-3 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-bold">
+                👑 Package: {booking.package.nameEn || booking.package.nameAr}
+              </div>
+            )}
+
+            {booking.selectedAddons && (() => {
+              try {
+                const parsed = JSON.parse(booking.selectedAddons)
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  return (
+                    <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs space-y-1">
+                      <span className="font-bold text-[#D4AF37] block">Included Addons / Features:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {parsed.map((a: any, idx: number) => (
+                          <span key={idx} className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/30">
+                            ✓ {a.nameEn || a.nameAr}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                }
+              } catch { return null }
+            })()}
 
             <p className="text-xs text-slate-300">
               Present this digital QR code to your driver/guide upon hotel pickup. Your driver will contact your WhatsApp 2 hours before pickup.

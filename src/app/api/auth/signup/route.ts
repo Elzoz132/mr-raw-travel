@@ -51,6 +51,13 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 7
     })
 
+    cookieStore.set('user_role', user.role || 'CUSTOMER', {
+      httpOnly: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7
+    })
+
     return NextResponse.json({
       success: true,
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
