@@ -41,7 +41,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   })
 
   const [otpCode, setOtpCode] = useState('')
-  const [demoOtpCode, setDemoOtpCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
@@ -92,10 +91,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         const data = await res.json()
         if (!res.ok || !data.success) {
           throw new Error(data.error || (isArabic ? 'فشل إرسال رمز التحقيق' : 'Failed to send OTP code'))
-        }
-
-        if (data.otpDemoCode) {
-          setDemoOtpCode(data.otpDemoCode)
         }
 
         setSuccessMsg(data.message || (isArabic ? 'تم إرسال رمز التحقيق إلى بريدك الإلكتروني' : 'OTP code sent to your email.'))
@@ -166,7 +161,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         body: JSON.stringify({ email: formData.email, name: formData.name })
       })
       const data = await res.json()
-      if (data.otpDemoCode) setDemoOtpCode(data.otpDemoCode)
       setSuccessMsg(isArabic ? 'تم إرسال رمز جديد إلى بريدك الإلكتروني!' : 'New OTP sent to your email!')
     } catch (err: any) {
       setErrorMsg(err.message || 'فشل إرسال الرمز')
@@ -277,21 +271,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         {/* OTP VERIFICATION STEP */}
         {mode === 'OTP_VERIFY' ? (
           <form onSubmit={handleVerifyOtpSubmit} className="space-y-5 text-xs">
-            {demoOtpCode && (
-              <div className="p-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/40 text-center space-y-1">
-                <span className="text-[10px] font-bold text-[#D4AF37] block">🔑 رمز التحقيق للتأكيد السريع (OTP Code):</span>
-                <div className="flex items-center justify-center gap-2">
-                  <span className="font-mono text-base font-black text-white bg-black/60 px-3 py-1 rounded-lg border border-[#D4AF37]/40">{demoOtpCode}</span>
-                  <button
-                    type="button"
-                    onClick={() => setOtpCode(demoOtpCode)}
-                    className="px-2.5 py-1 rounded bg-[#D4AF37] text-[#0B0F17] font-bold text-[10px]"
-                  >
-                    تعبئة الرمز تلقائياً
-                  </button>
-                </div>
-              </div>
-            )}
 
             <div className="space-y-2 text-center">
               <label className="font-bold text-slate-200 text-xs block">

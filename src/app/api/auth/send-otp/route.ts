@@ -14,12 +14,15 @@ export async function POST(req: Request) {
 
     const result = await sendOtpEmail(cleanEmail, name || 'Traveler', otpCode)
 
+    if (!result.success) {
+      return NextResponse.json({ success: false, error: result.message }, { status: 400 })
+    }
+
     return NextResponse.json({
       success: true,
       requireOtp: true,
       email: cleanEmail,
-      message: result.message,
-      otpDemoCode: otpCode // Provided so verification works 100% seamlessly in all environments
+      message: result.message
     })
   } catch (error: any) {
     console.error('Error sending OTP:', error)
