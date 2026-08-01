@@ -25,9 +25,9 @@ export async function POST(req: Request) {
       priceAdultEur, priceChildEur,
       priceAdultEgp, priceChildEgp,
       duration, pickupTime, location, maxSeats,
-      includedEn, includedAr,
-      excludedEn, excludedAr,
-      itineraryEn, itineraryAr
+      includedEn, includedAr, includedDe,
+      excludedEn, excludedAr, excludedDe,
+      itineraryEn, itineraryAr, itineraryDe
     } = body
 
     if (!titleEn || !coverImage || !priceAdultUsd) {
@@ -39,8 +39,23 @@ export async function POST(req: Request) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '') + '-' + Math.floor(Math.random() * 1000)
 
-    const categories = await prisma.tripCategory.findMany({ take: 1 })
-    const categoryId = categories[0]?.id
+    let categoryId = body.categoryId
+    if (!categoryId) {
+      const categories = await prisma.tripCategory.findMany({ take: 1 })
+      if (categories.length > 0) {
+        categoryId = categories[0].id
+      } else {
+        const newCat = await prisma.tripCategory.create({
+          data: {
+            slug: 'sea-trips',
+            nameEn: 'Sea Trips & Islands',
+            nameAr: 'الرحلات البحرية والجزر',
+            nameDe: 'Ausflüge aufs Meer & Inseln'
+          }
+        })
+        categoryId = newCat.id
+      }
+    }
 
     const tripData: any = {
       slug,
@@ -51,6 +66,7 @@ export async function POST(req: Request) {
       descAr: descAr || titleEn,
       descDe: descDe || titleEn,
       coverImage,
+      categoryId,
       priceAdultUsd: parseFloat(priceAdultUsd),
       priceChildUsd: parseFloat(priceChildUsd || Math.round(priceAdultUsd * 0.5)),
       priceAdultEur: parseFloat(priceAdultEur || Math.round(priceAdultUsd * 0.92)),
@@ -63,8 +79,10 @@ export async function POST(req: Request) {
       maxSeats: parseInt(maxSeats || 30, 10),
       includedEn: JSON.stringify(includedEn || ['VIP Hotel Transfers', 'Lunch Buffet', 'Snorkeling Equipment']),
       includedAr: JSON.stringify(includedAr || ['انتقالات الفندق VIP', 'بوفيه غداء مأكولات بحرية', 'معدات السنوركلنج']),
+      includedDe: JSON.stringify(includedDe || ['VIP Hoteltransfers', 'Mittagsbuffet', 'Schnorchelausrüstung']),
       excludedEn: JSON.stringify(excludedEn || ['Personal Expenses', 'Tips / Gratuities']),
       excludedAr: JSON.stringify(excludedAr || ['المصاريف الشخصية', 'الإكراميات']),
+      excludedDe: JSON.stringify(excludedDe || ['Persönliche Ausgaben', 'Trinkgelder']),
       itineraryEn: JSON.stringify(itineraryEn || [
         { time: '08:00 AM', title: 'Hotel Pickup', desc: 'Transfer in VIP AC Bus to Marina' },
         { time: '09:00 AM', title: 'Sailing & Snorkeling', desc: 'First snorkeling stop at Coral Reefs' }
@@ -72,11 +90,11 @@ export async function POST(req: Request) {
       itineraryAr: JSON.stringify(itineraryAr || [
         { time: '08:00 ص', title: 'التحرك من الفندق', desc: 'الانتقال بالباص المكيف الفاخر إلى المارينا' },
         { time: '09:00 ص', title: 'الإبحار والسنوركلنج', desc: 'الوقفة الأولى للسنوركلنج عند الشعاب المرجانية' }
+      ]),
+      itineraryDe: JSON.stringify(itineraryDe || [
+        { time: '08:00 Uhr', title: 'Hotelabholung', desc: 'Fahrt im VIP-Klimabus zur Marina' },
+        { time: '09:00 Uhr', title: 'Segeln & Schnorcheln', desc: 'Erster Schnorchelstopp am Korallenriff' }
       ])
-    }
-
-    if (categoryId) {
-      tripData.categoryId = categoryId
     }
 
     const newTrip = await prisma.trip.create({
@@ -85,6 +103,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, trip: newTrip })
   } catch (err: any) {
+    console.error('Error creating trip:', err)
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
   }
 }
@@ -107,10 +126,13 @@ export async function PUT(req: Request) {
 
     if (Array.isArray(updateData.includedEn)) updateData.includedEn = JSON.stringify(updateData.includedEn)
     if (Array.isArray(updateData.includedAr)) updateData.includedAr = JSON.stringify(updateData.includedAr)
+    if (Array.isArray(updateData.includedDe)) updateData.includedDe = JSON.stringify(updateData.includedDe)
     if (Array.isArray(updateData.excludedEn)) updateData.excludedEn = JSON.stringify(updateData.excludedEn)
     if (Array.isArray(updateData.excludedAr)) updateData.excludedAr = JSON.stringify(updateData.excludedAr)
+    if (Array.isArray(updateData.excludedDe)) updateData.excludedDe = JSON.stringify(updateData.excludedDe)
     if (Array.isArray(updateData.itineraryEn)) updateData.itineraryEn = JSON.stringify(updateData.itineraryEn)
     if (Array.isArray(updateData.itineraryAr)) updateData.itineraryAr = JSON.stringify(updateData.itineraryAr)
+    if (Array.isArray(updateData.itineraryDe)) updateData.itineraryDe = JSON.stringify(updateData.itineraryDe)
 
     const updatedTrip = await prisma.trip.update({
       where: { id },
@@ -119,6 +141,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ success: true, trip: updatedTrip })
   } catch (err: any) {
+    console.error('Error updating trip:', err)
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
   }
 }
