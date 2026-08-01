@@ -173,3 +173,50 @@ export async function POST(req: Request) {
     )
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const cookieStore = await cookies()
+    const adminSession = cookieStore.get('mrraw_admin_session')
+    const userSession = cookieStore.get('user_session')
+
+    const url = new URL(req.url)
+    const queryEmail = url.searchParams.get('email')
+
+    let email = queryEmail || ''
+
+    if (!email && userSession?.value) {
+      try {
+        const u = JSON.parse(userSession.value)
+        email = u.email || ''
+      } catch {}
+    }
+
+    if (adminSession?.value === 'authenticated' && !email) {
+      // Admin request: return all recent bookings
+      const bookings = await prisma.booking.findMany({
+        take: 50,
+        orderBy: { createdAt: 'desc' },
+        include: { trip: true, package: true, receipts: true }
+      })
+      return NextResponse.json({ success: true, bookings })
+    }
+
+    if (!email) {
+      return NextResponse.json({ success: true, bookings: [] })
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        leadEmail: { equals: email.trim(), mode: 'insensitive' }
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { trip: true, package: true, receipts: true }
+    })
+
+    return NextResponse.json({ success: true, bookings })
+  } catch (error: any) {
+    console.error('Error fetching bookings:', error)
+    return NextResponse.json({ success: false, error: error.message, bookings: [] })
+  }
+}
