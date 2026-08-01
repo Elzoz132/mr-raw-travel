@@ -265,6 +265,7 @@ export default function BookingPage() {
                 <img
                   src={bookingDraft.tripCover || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80'}
                   alt="Trip"
+                  loading="lazy"
                   className="w-20 h-20 rounded-xl object-cover"
                 />
                 <div>

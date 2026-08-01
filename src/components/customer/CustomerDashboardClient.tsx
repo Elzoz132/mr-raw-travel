@@ -336,7 +336,7 @@ export const CustomerDashboardClient: React.FC = () => {
                 return (
                   <div key={tripId} className="glass-panel rounded-2xl overflow-hidden border border-white/10 space-y-3 p-4 flex flex-col justify-between">
                     <div className="relative h-40 rounded-xl overflow-hidden">
-                      <img src={tripData.coverImage} alt={tripData.titleAr} className="w-full h-full object-cover" />
+                      <img src={tripData.coverImage} alt={tripData.titleAr} loading="lazy" className="w-full h-full object-cover" />
                       <button
                         onClick={() => toggleWishlist(tripId)}
                         className="absolute top-3 right-3 p-2 rounded-full bg-rose-500 text-white shadow-lg"
