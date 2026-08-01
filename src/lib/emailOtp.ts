@@ -43,23 +43,21 @@ export function verifyOtpCode(email: string, code: string): { valid: boolean; na
 }
 
 /**
- * Dispatch REAL OTP Email notification to Gmail
+ * Dispatch REAL OTP Email notification directly to Gmail Inbox
  */
-export async function sendOtpEmail(email: string, name: string, otpCode: string): Promise<{ success: boolean; message: string; sentViaSmtp: boolean; otpCode?: string }> {
+export async function sendOtpEmail(email: string, name: string, otpCode: string): Promise<{ success: boolean; message: string; sentViaSmtp: boolean }> {
   const cleanEmail = email.toLowerCase().trim()
-  console.log(`[Gmail OTP System] 📧 Sending REAL OTP ${otpCode} to Gmail: ${cleanEmail}`)
+  console.log(`[Gmail OTP System] 📧 Attempting REAL OTP email dispatch for ${cleanEmail} (Code: ${otpCode})`)
 
   // Fetch SMTP credentials from Database or Environment
-  let gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER || ''
-  let gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || ''
-  let smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com'
-  let smtpPort = parseInt(process.env.SMTP_PORT || '465', 10)
+  let gmailUser = (process.env.GMAIL_USER || process.env.SMTP_USER || '').trim()
+  let gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '').trim()
 
   try {
     const userSetting = await prisma.settings.findUnique({ where: { key: 'gmail_user' } })
     const passSetting = await prisma.settings.findUnique({ where: { key: 'gmail_app_password' } })
-    if (userSetting?.value) gmailUser = userSetting.value
-    if (passSetting?.value) gmailPass = passSetting.value
+    if (userSetting?.value?.trim()) gmailUser = userSetting.value.trim()
+    if (passSetting?.value?.trim()) gmailPass = passSetting.value.trim()
   } catch (e) {}
 
   const htmlBody = `
@@ -91,20 +89,22 @@ export async function sendOtpEmail(email: string, name: string, otpCode: string)
   `
 
   let sentViaSmtp = false
+  let lastError = ''
 
   if (gmailUser && gmailPass) {
+    const cleanPass = gmailPass.replace(/\s+/g, '')
+
+    // 1. Try Port 587 TLS
     try {
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpPort === 465,
-        auth: {
-          user: gmailUser,
-          pass: gmailPass
-        }
+      const transporter587 = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: { user: gmailUser, pass: cleanPass },
+        tls: { rejectUnauthorized: false }
       })
 
-      await transporter.sendMail({
+      await transporter587.sendMail({
         from: `"Mr.Raw Travel VIP" <${gmailUser}>`,
         to: cleanEmail,
         subject: `👑 ${otpCode} - رمز تحقيق حسابك في Mr.Raw Travel`,
@@ -112,18 +112,52 @@ export async function sendOtpEmail(email: string, name: string, otpCode: string)
       })
 
       sentViaSmtp = true
-      console.log(`[Gmail OTP System] ✅ REAL EMAIL DISPATCHED via SMTP to ${cleanEmail}`)
-    } catch (err: any) {
-      console.error('[Gmail OTP System] Error dispatching email via Nodemailer SMTP:', err)
+      console.log(`[Gmail OTP System] ✅ REAL EMAIL DISPATCHED via SMTP Port 587 to ${cleanEmail}`)
+    } catch (err587: any) {
+      console.warn('[Gmail OTP System] Port 587 failed, trying Port 465 SSL. Reason:', err587?.message)
+      lastError = err587?.message || 'SMTP 587 failed'
+
+      // 2. Fallback to Port 465 SSL
+      try {
+        const transporter465 = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: { user: gmailUser, pass: cleanPass }
+        })
+
+        await transporter465.sendMail({
+          from: `"Mr.Raw Travel VIP" <${gmailUser}>`,
+          to: cleanEmail,
+          subject: `👑 ${otpCode} - رمز تحقيق حسابك في Mr.Raw Travel`,
+          html: htmlBody
+        })
+
+        sentViaSmtp = true
+        console.log(`[Gmail OTP System] ✅ REAL EMAIL DISPATCHED via SMTP Port 465 to ${cleanEmail}`)
+      } catch (err465: any) {
+        console.error('[Gmail OTP System] Port 465 SSL also failed:', err465?.message)
+        lastError = err465?.message || 'SMTP 465 failed'
+      }
+    }
+  }
+
+  if (!sentViaSmtp) {
+    const missingCreds = !gmailUser || !gmailPass
+    const failMessage = missingCreds
+      ? `لم يتم إدخال بريد الجيميل وكلمة سر التطبيقات (App Password) في لوحة التحكم الإدارية بعد (/admin/settings). يرجى فتح الإعدادات وإدخال Gmail Email و Gmail App Password ليصل الإيميل فوراً للـ Inbox!`
+      : `فشل الاتصال بسيرفر الجيميل (${lastError}). يرجى التأكد من إنشاء (App Password) من حساب جوجل وتجربة إعادة الإرسال.`
+
+    return {
+      success: false,
+      message: failMessage,
+      sentViaSmtp: false
     }
   }
 
   return {
     success: true,
-    message: sentViaSmtp
-      ? `تم إرسال رمز التحقيق المباشر إلى صندوق الوارد بريدك الإلكتروني (${cleanEmail})`
-      : `تم توليد رمز التحقيق إلى بريدك (${cleanEmail})`,
-    sentViaSmtp,
-    otpCode
+    message: `تم إرسال رمز التحقيق المباشر إلى صندوق الوارد بريدك الإلكتروني (${cleanEmail})`,
+    sentViaSmtp: true
   }
 }
