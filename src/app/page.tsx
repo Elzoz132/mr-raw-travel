@@ -9,16 +9,14 @@ import { Testimonials } from '@/components/home/Testimonials'
 import { FAQSection } from '@/components/home/FAQSection'
 import { JsonLd } from '@/components/seo/JsonLd'
 
-export const revalidate = 60 // Revalidate every 60s
+export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   let trips: TripCardData[] = []
 
   try {
     const dbTrips = await prisma.trip.findMany({
-      where: { isPublished: true },
-      take: 6,
-      orderBy: { rating: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
 
     trips = dbTrips.map((t: any) => ({
