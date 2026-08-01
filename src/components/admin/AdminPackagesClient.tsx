@@ -35,6 +35,60 @@ export const AdminPackagesClient: React.FC = () => {
   const [saving, setSaving] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [translating, setTranslating] = useState(false)
+
+  const handleAutoTranslate = async () => {
+    if (!editingPkg) return
+    const sourceText = editingPkg.nameAr || editingPkg.nameEn || ''
+    const sourceDesc = editingPkg.descAr || editingPkg.descEn || ''
+    if (!sourceText && !sourceDesc) return
+
+    setTranslating(true)
+    try {
+      const [nameEnRes, nameArRes, nameDeRes, descEnRes, descArRes, descDeRes] = await Promise.all([
+        fetch('/api/admin/translate', { method: 'POST', body: JSON.stringify({ text: sourceText, targetLang: 'en' }) }).then(r => r.json()),
+        fetch('/api/admin/translate', { method: 'POST', body: JSON.stringify({ text: sourceText, targetLang: 'ar' }) }).then(r => r.json()),
+        fetch('/api/admin/translate', { method: 'POST', body: JSON.stringify({ text: sourceText, targetLang: 'de' }) }).then(r => r.json()),
+        sourceDesc ? fetch('/api/admin/translate', { method: 'POST', body: JSON.stringify({ text: sourceDesc, targetLang: 'en' }) }).then(r => r.json()) : Promise.resolve({ translatedText: '' }),
+        sourceDesc ? fetch('/api/admin/translate', { method: 'POST', body: JSON.stringify({ text: sourceDesc, targetLang: 'ar' }) }).then(r => r.json()) : Promise.resolve({ translatedText: '' }),
+        sourceDesc ? fetch('/api/admin/translate', { method: 'POST', body: JSON.stringify({ text: sourceDesc, targetLang: 'de' }) }).then(r => r.json()) : Promise.resolve({ translatedText: '' })
+      ])
+
+      setEditingPkg({
+        ...editingPkg,
+        nameEn: nameEnRes.translatedText || editingPkg.nameEn || sourceText,
+        nameAr: nameArRes.translatedText || editingPkg.nameAr || sourceText,
+        nameDe: nameDeRes.translatedText || editingPkg.nameDe || sourceText,
+        ...(sourceDesc && {
+          descEn: descEnRes.translatedText || editingPkg.descEn,
+          descAr: descArRes.translatedText || editingPkg.descAr,
+          descDe: descDeRes.translatedText || editingPkg.descDe
+        })
+      })
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setTranslating(false)
+    }
+  }
+
+  const handleEgpPriceChange = (egpVal: number) => {
+    if (!editingPkg) return
+    const usd = Math.round(egpVal / 48)
+    const eur = Math.round(egpVal / 52)
+    const gbp = Math.round(egpVal / 60)
+    setEditingPkg({
+      ...editingPkg,
+      priceAdultEgp: egpVal,
+      priceAdultUsd: usd,
+      priceAdultEur: eur,
+      priceAdultGbp: gbp,
+      priceChildEgp: Math.round(egpVal * 0.6),
+      priceChildUsd: Math.round(usd * 0.6),
+      priceChildEur: Math.round(eur * 0.6),
+      priceChildGbp: Math.round(gbp * 0.6)
+    })
+  }
 
   // Fetch Trips & Packages
   const loadData = async () => {
@@ -394,25 +448,40 @@ export const AdminPackagesClient: React.FC = () => {
 
                 {/* Package Name EN, AR, DE */}
                 <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">Package Titles</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
+                      اسم ومسمى الباقة (اكتب بأي لغة واضغط ترجمة تلقائية)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAutoTranslate}
+                      disabled={translating}
+                      className="px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0B0F17] font-bold text-xs flex items-center gap-1.5 hover:bg-[#E5C158] transition"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{translating ? 'جاري الترجمة التلقائية...' : '⚡ ترجمة تلقائية لكل اللغات'}</span>
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <label className="text-slate-400 block mb-1">الاسم بالعربية (AR)</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="مثال: باقة فاميلي سفاري الشاملة"
+                        value={editingPkg.nameAr || ''}
+                        onChange={(e) => setEditingPkg({ ...editingPkg, nameAr: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                      />
+                    </div>
                     <div>
                       <label className="text-slate-400 block mb-1">Name (EN)</label>
                       <input
                         type="text"
                         required
+                        placeholder="e.g. Family Safari Full Package"
                         value={editingPkg.nameEn || ''}
                         onChange={(e) => setEditingPkg({ ...editingPkg, nameEn: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1">الاسم (AR)</label>
-                      <input
-                        type="text"
-                        required
-                        value={editingPkg.nameAr || ''}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, nameAr: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
                       />
                     </div>
@@ -421,6 +490,7 @@ export const AdminPackagesClient: React.FC = () => {
                       <input
                         type="text"
                         required
+                        placeholder="z.B. Familien-Safari Paket"
                         value={editingPkg.nameDe || ''}
                         onChange={(e) => setEditingPkg({ ...editingPkg, nameDe: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
@@ -431,8 +501,23 @@ export const AdminPackagesClient: React.FC = () => {
 
                 {/* Multi-Currency Pricing Inputs */}
                 <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">Pricing Matrix (Adult & Child across 4 Currencies)</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
+                      أسعار الباقة (ادخل السعر بالجنيه المصري ليتم التحويل تلقائياً)
+                    </span>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                    <div>
+                      <label className="text-slate-400 block mb-1">السعر بالجنيه (EGP) *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="800"
+                        value={editingPkg.priceAdultEgp || 0}
+                        onChange={(e) => handleEgpPriceChange(Number(e.target.value))}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-[#D4AF37] text-white font-black text-emerald-400 text-sm"
+                      />
+                    </div>
                     <div>
                       <label className="text-slate-400 block mb-1">Adult USD ($)</label>
                       <input
@@ -441,16 +526,6 @@ export const AdminPackagesClient: React.FC = () => {
                         value={editingPkg.priceAdultUsd || 0}
                         onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultUsd: Number(e.target.value) })}
                         className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1">Child USD ($)</label>
-                      <input
-                        type="number"
-                        required
-                        value={editingPkg.priceChildUsd || 0}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, priceChildUsd: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
                       />
                     </div>
                     <div>
@@ -464,51 +539,12 @@ export const AdminPackagesClient: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-slate-400 block mb-1">Child EUR (€)</label>
-                      <input
-                        type="number"
-                        required
-                        value={editingPkg.priceChildEur || 0}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, priceChildEur: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1">Adult EGP (ج.م)</label>
-                      <input
-                        type="number"
-                        required
-                        value={editingPkg.priceAdultEgp || 0}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultEgp: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold text-emerald-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1">Child EGP (ج.م)</label>
-                      <input
-                        type="number"
-                        required
-                        value={editingPkg.priceChildEgp || 0}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, priceChildEgp: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
-                      />
-                    </div>
-                    <div>
                       <label className="text-slate-400 block mb-1">Adult GBP (£)</label>
                       <input
                         type="number"
                         value={editingPkg.priceAdultGbp || 0}
                         onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultGbp: Number(e.target.value) })}
                         className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1">Child GBP (£)</label>
-                      <input
-                        type="number"
-                        value={editingPkg.priceChildGbp || 0}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, priceChildGbp: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
                       />
                     </div>
                   </div>
