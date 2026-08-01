@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/useStore'
 export const FloatingWhatsAppWidget: React.FC = () => {
   const { language } = useAppStore()
   const isArabic = language === 'ar'
-  const [whatsappNumber, setWhatsappNumber] = useState('01070657476')
+  const [whatsappNumber, setWhatsappNumber] = useState('01022392428')
 
   useEffect(() => {
     fetch('/api/settings')

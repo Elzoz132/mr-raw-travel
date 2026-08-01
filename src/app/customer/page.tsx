@@ -23,7 +23,7 @@ export default async function CustomerDashboardPage() {
   }
 
   let bookings: any[] = []
-  let whatsappNumber = '01070657476'
+  let whatsappNumber = '01022392428'
 
   if (currentUser?.email) {
     try {

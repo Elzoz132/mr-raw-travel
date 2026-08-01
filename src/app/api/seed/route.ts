@@ -679,9 +679,42 @@ export async function GET() {
       })
     }
 
+    await prisma.settings.upsert({
+      where: { key: 'whatsapp_number' },
+      update: { value: '01022392428' },
+      create: { key: 'whatsapp_number', value: '01022392428' }
+    })
+
+    const footerCmsReal = {
+      companyName: 'Mr.Raw Travel',
+      descriptionEn: 'The premier luxury tourism platform in Hurghada, Egypt. Specializing in VIP private yacht charters, Giftun island sea trips, mega desert quad safaris, and ancient Luxor guided tours.',
+      descriptionAr: 'منصة السياحة الملكية الأولى في الغردقة، مصر. متخصصون في رحلات اليخوت الخاصة VIP، وجزيرة جفتون، وسفاري البيتش باجي، ورحلات الأقصر.',
+      descriptionDe: 'Die führende Luxus-Tourismusplattform in Hurghada, Ägypten.',
+      phone1: '+20 102 239 2428',
+      phone2: '+20 102 239 2428',
+      whatsApp: '01022392428',
+      email: 'info@mrrawtravel.com',
+      addressEn: 'Marina Boulevard, VIP Tower 4, Hurghada, Red Sea, Egypt',
+      addressAr: 'مارينا يخت الغردقة، برج VIP رقم 4، الغردقة، البحر الأحمر، مصر',
+      addressDe: 'Marina Boulevard, VIP Tower 4, Hurghada, Rotes Meer, Ägypten',
+      googleMapsUrl: 'https://maps.google.com',
+      facebookUrl: 'https://www.facebook.com/share/1apfrxKfvg/?mibextid=wwXIfr',
+      instagramUrl: 'https://www.instagram.com/mr_raw_travel?igsh=bnB0YnFlOGlnN2g2',
+      tikTokUrl: 'https://www.tiktok.com/@mr.raw_travel?_r=1&_t=ZS-98WNhVwMfXY',
+      copyrightText: '© Mr.Raw Travel. All Rights Reserved.',
+      paymentLogos: ['Cash on Arrival', 'InstaPay', 'Vodafone Cash', 'Bank Wire', 'Visa / Mastercard'],
+      trustBadges: ['100% Certified Safety', 'TripAdvisor Excellence', 'Free Cancellation']
+    }
+
+    await prisma.settings.upsert({
+      where: { key: 'cms_footer_config' },
+      update: { value: JSON.stringify(footerCmsReal) },
+      create: { key: 'cms_footer_config', value: JSON.stringify(footerCmsReal) }
+    })
+
     return NextResponse.json({
       success: true,
-      message: 'Real Mr.Raw Travel packages & Addons successfully seeded into database!',
+      message: 'Real Mr.Raw Travel packages, Social links, & Addons successfully seeded into database!',
       tripsSeeded: 5,
       addonsSeeded: addonsData.length
     })
