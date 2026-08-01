@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { generateBookingNumber } from '@/lib/utils'
 import { upsertCustomerCrmProfile } from '@/lib/crm'
+import { sendAdminBookingAlert } from '@/lib/notifications'
 
 export async function POST(req: Request) {
   try {
@@ -109,11 +110,36 @@ export async function POST(req: Request) {
       spendUsd: currency === 'USD' ? totalPrice : totalPrice / 1.0,
     })
 
+    // 4. Dispatch Instant Admin Notification (Telegram Bot & WhatsApp Alert Link)
+    let tripName = 'Mr. Raw Luxury Excursion'
+    if (targetTripId) {
+      const t = await prisma.trip.findUnique({ where: { id: targetTripId } })
+      if (t) tripName = t.titleAr || t.titleEn
+    }
+
+    const notificationResult = await sendAdminBookingAlert({
+      bookingNumber: booking.bookingNumber,
+      fullName,
+      phone,
+      whatsApp,
+      email,
+      tripName,
+      tripDate: new Date(tripDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      adults,
+      children,
+      totalPrice,
+      currency,
+      hotelName,
+      paymentMethod
+    })
+
     return NextResponse.json({
       success: true,
       bookingId: booking.id,
       bookingNumber: booking.bookingNumber,
-      qrToken: booking.qrToken
+      qrToken: booking.qrToken,
+      telegramAlertSent: notificationResult.telegramSent,
+      whatsappAdminUrl: notificationResult.whatsappUrl
     })
 
   } catch (error: any) {

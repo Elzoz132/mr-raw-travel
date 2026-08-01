@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useAppStore } from '@/store/useStore'
+import { PrintableVoucherModal } from '@/components/common/PrintableVoucherModal'
 import { motion } from 'framer-motion'
 import {
   Calendar,
@@ -76,16 +77,21 @@ export const CustomerDashboardClient: React.FC = () => {
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="flex items-center gap-4 sm:gap-6 bg-black/40 p-4 rounded-2xl border border-white/10 text-xs">
+        {/* Quick Stats & VIP Loyalty Badge */}
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6 bg-black/40 p-4 rounded-2xl border border-white/10 text-xs">
           <div className="text-center px-2">
             <span className="text-slate-400 block text-[10px] uppercase font-bold">{isArabic ? 'إجمالي الرحلات' : 'Total Trips'}</span>
             <span className="text-2xl font-black text-[#D4AF37]">{totalTripsCount}</span>
           </div>
           <div className="w-px h-8 bg-white/10" />
           <div className="text-center px-2">
-            <span className="text-slate-400 block text-[10px] uppercase font-bold">{isArabic ? 'نقاط الولاء' : 'Loyalty Points'}</span>
+            <span className="text-slate-400 block text-[10px] uppercase font-bold">{isArabic ? 'نقاط الولاء الملكية' : 'Loyalty Points'}</span>
             <span className="text-2xl font-black text-emerald-400">1,250 PTS</span>
+          </div>
+          <div className="w-px h-8 bg-white/10" />
+          <div className="p-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37]/20 to-amber-500/10 border border-[#D4AF37]/40 text-right">
+            <span className="text-[10px] font-bold text-[#D4AF37] block">👑 كود خصمك الملكي التلقائي (10% OFF)</span>
+            <span className="text-xs font-mono font-black text-white">MRRAW-VIP10</span>
           </div>
         </div>
       </motion.div>
@@ -199,31 +205,26 @@ export const CustomerDashboardClient: React.FC = () => {
 
       {/* Voucher Modal Preview */}
       {selectedVoucher && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-md glass-panel rounded-3xl p-6 border border-[#D4AF37] shadow-2xl space-y-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center mx-auto">
-              <QrCode className="w-8 h-8" />
-            </div>
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">OFFICIAL TRIP VOUCHER</span>
-              <h3 className="text-xl font-black text-white">{selectedVoucher.tripTitle || 'VIP Hurghada Cruise'}</h3>
-              <p className="text-xs text-slate-300">Present this QR voucher code to your driver or boat captain.</p>
-            </div>
-
-            <div className="p-4 bg-white rounded-2xl inline-block shadow-inner">
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VOUCHER-${selectedVoucher.id}`} alt="QR Code" className="w-36 h-36 mx-auto" />
-            </div>
-
-            <div className="flex items-center justify-center gap-3">
-              <button onClick={() => window.print()} className="px-6 py-2.5 rounded-xl gold-gradient-btn text-xs font-black text-[#0B0F17]">
-                Print Voucher
-              </button>
-              <button onClick={() => setSelectedVoucher(null)} className="px-4 py-2.5 rounded-xl bg-white/10 text-white font-bold text-xs">
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <PrintableVoucherModal
+          voucher={{
+            bookingNumber: selectedVoucher.bookingNumber || selectedVoucher.id.slice(0, 8),
+            leadPassengerName: user?.name || selectedVoucher.leadPassengerName || 'Guest Traveler',
+            leadPhone: selectedVoucher.leadPhone || user?.phone,
+            leadEmail: selectedVoucher.leadEmail || user?.email,
+            tripTitle: selectedVoucher.tripTitle || selectedVoucher.name || 'Hurghada Red Sea VIP Trip',
+            tripDate: selectedVoucher.travelDate || selectedVoucher.tripDate,
+            pickupLocation: selectedVoucher.pickupLocation || selectedVoucher.hotelName,
+            hotelName: selectedVoucher.hotelName,
+            adults: selectedVoucher.adults || 1,
+            children: selectedVoucher.children || 0,
+            totalPrice: selectedVoucher.totalAmount || selectedVoucher.totalPrice || 0,
+            currency: selectedVoucher.currency || 'USD',
+            paymentMethod: selectedVoucher.paymentMethod || 'CASH',
+            bookingStatus: selectedVoucher.status || selectedVoucher.bookingStatus || 'CONFIRMED',
+            qrToken: selectedVoucher.qrToken
+          }}
+          onClose={() => setSelectedVoucher(null)}
+        />
       )}
 
     </div>

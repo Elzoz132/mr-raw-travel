@@ -238,6 +238,20 @@ export const TripBookingWidget: React.FC<TripBookingWidgetProps> = ({ trip, sele
           {isArabic ? 'احجز الآن في دقيقتين' : 'Instant 2-Min Booking'}
         </LuxuryButton>
 
+        {/* Smart WhatsApp Assistant Button */}
+        <a
+          href={`https://wa.me/201022392428?text=${encodeURIComponent(
+            isArabic
+              ? `مرحباً شركة مستر رو للتنقلات والرحلات 👑\nأود الاستفسار وحجز رحلة: *${isArabic ? (trip.titleAr || trip.titleEn) : trip.titleEn}*\n📅 التاريخ المطلوب: *${date}*\n👥 عدد المسافرين: *${adults} بالغين ${children > 0 ? `| ${children} أطفال` : ''}*\n💰 إجمالي المبلغ: *${totalPrice} ${currency}*\nهل التوقيت متاح لحجز الفوچر فوراً؟`
+              : `Hello Mr. Raw Travel Team 👑\nI would like to book: *${trip.titleEn}*\n📅 Requested Date: *${date}*\n👥 Travelers: *${adults} Adults ${children > 0 ? `, ${children} Children` : ''}*\n💰 Total: *${totalPrice} ${currency}*\nIs this date available?`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg transition-all"
+        >
+          <span>💬 {isArabic ? 'احجز واستفسر سريعاً عبر الواتساب' : 'Quick WhatsApp Booking & Inquiry'}</span>
+        </a>
+
         <button
           onClick={() => toggleWishlist(trip.id)}
           className={`w-full py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${

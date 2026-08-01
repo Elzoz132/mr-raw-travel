@@ -230,6 +230,51 @@ export const AdminSettingsClient: React.FC = () => {
 
           </div>
 
+          {/* Section 3: Telegram Bot & WhatsApp Admin Notifications */}
+          <div className="lg:col-span-2 glass-panel rounded-3xl p-6 sm:p-8 border border-[#D4AF37]/30 space-y-4 text-xs">
+            <h3 className="text-lg font-bold text-[#D4AF37] border-l-4 border-[#D4AF37] pl-3 flex items-center gap-2">
+              <span>📲 إشعارات الإدارة الفورية عبر التليجرام والواتساب (Instant Admin Alerts)</span>
+            </h3>
+            <p className="text-slate-400 text-xs">
+              عند إضافة حجز جديد بواسطة أي عميل، سيقوم السيرفر فوراً بإرسال رسالة مفصلة بتفاصيل الحجز والعميل والمبلغ إلى حساب التليجرام ورقم الواتساب المحدد هنا.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-bold block">Telegram Bot Token</label>
+                <input
+                  type="text"
+                  placeholder="123456789:ABCdefGHIjklMNOpqrs..."
+                  value={settings.telegram_bot_token || ''}
+                  onChange={(e) => setSettings({ ...settings, telegram_bot_token: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-bold block">Telegram Chat ID / Group ID</label>
+                <input
+                  type="text"
+                  placeholder="-1001234567890"
+                  value={settings.telegram_chat_id || ''}
+                  onChange={(e) => setSettings({ ...settings, telegram_chat_id: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-emerald-400 font-bold block">رقم واتساب الإدارة المباشر</label>
+                <input
+                  type="text"
+                  placeholder="201022392428"
+                  value={settings.admin_whatsapp_number || '201022392428'}
+                  onChange={(e) => setSettings({ ...settings, admin_whatsapp_number: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-emerald-500/40 text-emerald-300 font-mono font-bold"
+                />
+              </div>
+            </div>
+          </div>
+
         </form>
 
       </div>
