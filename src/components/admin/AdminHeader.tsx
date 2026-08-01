@@ -24,6 +24,7 @@ export const AdminHeader: React.FC = () => {
     { href: '/admin/content', label: isArabic ? '📝 النصوص واللغات' : 'Site Text CMS' },
     { href: '/admin/footer', label: isArabic ? '🦶 الفوتر' : 'Footer CMS' },
     { href: '/admin/packages', label: isArabic ? '🌴 الباقات والأسعار' : 'Packages & Pricing' },
+    { href: '/admin/trips', label: isArabic ? '⛵ رحلات الصفحة الرئيسية' : 'Homepage Excursions' },
     { href: '/admin/addons', label: isArabic ? '✨ الإضافات والأنشطة' : 'Addons & Builder' },
     { href: '/admin/reviews', label: isArabic ? '⭐ مراجعة التقييمات' : 'Review Moderation' },
     { href: '/admin/gallery', label: isArabic ? '🖼️ معرض الصور' : 'Gallery CMS' },
