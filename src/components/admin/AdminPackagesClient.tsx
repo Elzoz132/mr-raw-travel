@@ -431,16 +431,19 @@ export const AdminPackagesClient: React.FC = () => {
                 
                 {/* Trip Selection */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Target Excursion</label>
+                  <label className="text-xs font-semibold text-[#D4AF37] uppercase tracking-wider block">
+                    الرحلة المستهدفة (Target Excursion) *
+                  </label>
                   <select
                     required
                     value={editingPkg.tripId}
                     onChange={(e) => setEditingPkg({ ...editingPkg, tripId: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs font-bold"
                   >
+                    <option value="" className="bg-[#0F172A]">-- اختر الرحلة (مثل رحلات السفاري / الألعاب المائية) --</option>
                     {trips.map((t) => (
                       <option key={t.id} value={t.id} className="bg-[#0F172A]">
-                        {t.titleEn}
+                        {t.titleAr ? `${t.titleAr} (${t.titleEn})` : t.titleEn}
                       </option>
                     ))}
                   </select>
@@ -464,7 +467,7 @@ export const AdminPackagesClient: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                     <div>
-                      <label className="text-slate-400 block mb-1">الاسم بالعربية (AR)</label>
+                      <label className="text-slate-400 block mb-1">الاسم بالعربية (AR) *</label>
                       <input
                         type="text"
                         required
@@ -475,7 +478,7 @@ export const AdminPackagesClient: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-slate-400 block mb-1">Name (EN)</label>
+                      <label className="text-slate-400 block mb-1">Name (EN) *</label>
                       <input
                         type="text"
                         required
@@ -489,13 +492,142 @@ export const AdminPackagesClient: React.FC = () => {
                       <label className="text-slate-400 block mb-1">Name (DE)</label>
                       <input
                         type="text"
-                        required
                         placeholder="z.B. Familien-Safari Paket"
                         value={editingPkg.nameDe || ''}
                         onChange={(e) => setEditingPkg({ ...editingPkg, nameDe: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Package Description (وصف الباقة الشامل) */}
+                <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
+                    وصف وتفاصيل الباقة (Package Full Description)
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label className="text-slate-400 block mb-1">الوصف بالعربية (AR)</label>
+                      <textarea
+                        rows={3}
+                        placeholder="أدخل وصف الباقة وتفاصيل ما تحتوي عليه من عشاء وركوب خيل وكواد وشاي بدوي..."
+                        value={editingPkg.descAr || ''}
+                        onChange={(e) => setEditingPkg({ ...editingPkg, descAr: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 block mb-1">Description (EN)</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Enter full package highlights, activities, dinner, quad biking, and transfers..."
+                        value={editingPkg.descEn || ''}
+                        onChange={(e) => setEditingPkg({ ...editingPkg, descEn: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Duration & Meeting Point Details (مدة الرحلة، المواعيد، مكان التنقلات) */}
+                <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5 text-xs">
+                  <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
+                    مدة الباقة ومكان التجمع والتنقلات (Duration & Pickup Details)
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div>
+                      <label className="text-slate-400 block mb-1">مدة الرحلة (Duration)</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: 4 ساعات (15:00 - 19:00)"
+                        value={editingPkg.duration || ''}
+                        onChange={(e) => setEditingPkg({ ...editingPkg, duration: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 block mb-1">وقت البدء (Start Time)</label>
+                      <input
+                        type="text"
+                        placeholder="03:00 PM"
+                        value={editingPkg.startTime || ''}
+                        onChange={(e) => setEditingPkg({ ...editingPkg, startTime: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 block mb-1">وقت الانتهاء (End Time)</label>
+                      <input
+                        type="text"
+                        placeholder="07:00 PM"
+                        value={editingPkg.endTime || ''}
+                        onChange={(e) => setEditingPkg({ ...editingPkg, endTime: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 block mb-1">مكان التجمع والتنقلات</label>
+                      <input
+                        type="text"
+                        placeholder="جميع فنادق الغردقة والجونة وسهل حشيش"
+                        value={editingPkg.meetingPointAr || ''}
+                        onChange={(e) => setEditingPkg({ ...editingPkg, meetingPointAr: e.target.value, meetingPointEn: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Package Photos Upload Gallery (صور الباقة) */}
+                <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
+                      معرض صور الباقة والرحلة (Package Photo Gallery)
+                    </span>
+                    <label className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:bg-emerald-600 transition">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{uploadingPhoto ? 'جاري رفع الصورة...' : 'إضافة صورة جديدة'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        disabled={uploadingPhoto}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Photo Thumbnails Preview */}
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    {(() => {
+                      let arr: string[] = []
+                      if (editingPkg.photos) {
+                        try {
+                          arr = typeof editingPkg.photos === 'string' ? JSON.parse(editingPkg.photos) : editingPkg.photos
+                        } catch {
+                          arr = [editingPkg.photos]
+                        }
+                      }
+                      if (arr.length === 0) {
+                        return <span className="text-slate-400 text-xs">لا يوجد صور مرفوعة لهذه الباقة حالياً. اضغط "إضافة صورة جديدة" لرفع صورك.</span>
+                      }
+                      return arr.map((url: string, index: number) => (
+                        <div key={index} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-white/15">
+                          <img src={url} alt={`Photo ${index}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const filtered = arr.filter((_, i) => i !== index)
+                              setEditingPkg({ ...editingPkg, photos: JSON.stringify(filtered) })
+                            }}
+                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-rose-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))
+                    })()}
                   </div>
                 </div>
 
@@ -553,16 +685,17 @@ export const AdminPackagesClient: React.FC = () => {
                 {/* Badge & Flags */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                   <div>
-                    <label className="text-slate-300 font-semibold block mb-1">Package Badge (e.g. VIP CHARTER)</label>
+                    <label className="text-slate-300 font-semibold block mb-1">شارة الباقة (Badge) (مثلاً: VIP SAFARI)</label>
                     <input
                       type="text"
+                      placeholder="VIP SAFARI"
                       value={editingPkg.badge || ''}
                       onChange={(e) => setEditingPkg({ ...editingPkg, badge: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
                     />
                   </div>
                   <div>
-                    <label className="text-slate-300 font-semibold block mb-1">Capacity (Max Seats)</label>
+                    <label className="text-slate-300 font-semibold block mb-1">سعة المقاعد (Capacity)</label>
                     <input
                       type="number"
                       value={editingPkg.capacity || 20}
@@ -571,15 +704,15 @@ export const AdminPackagesClient: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-slate-300 font-semibold block mb-1">Status</label>
+                    <label className="text-slate-300 font-semibold block mb-1">الحالة (Status)</label>
                     <select
                       value={editingPkg.status || 'ACTIVE'}
                       onChange={(e) => setEditingPkg({ ...editingPkg, status: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
                     >
-                      <option value="ACTIVE" className="bg-[#0F172A]">ACTIVE</option>
-                      <option value="HIDDEN" className="bg-[#0F172A]">HIDDEN</option>
-                      <option value="ARCHIVED" className="bg-[#0F172A]">ARCHIVED</option>
+                      <option value="ACTIVE" className="bg-[#0F172A]">نشط (ACTIVE)</option>
+                      <option value="HIDDEN" className="bg-[#0F172A]">مخفي (HIDDEN)</option>
+                      <option value="ARCHIVED" className="bg-[#0F172A]">مؤرشف (ARCHIVED)</option>
                     </select>
                   </div>
                 </div>
