@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
-import { Lock, Shield, ArrowRight } from 'lucide-react'
+import { Lock, Shield, ArrowLeft } from 'lucide-react'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -25,12 +25,12 @@ export default function AdminLoginPage() {
 
       const data = await res.json()
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Invalid admin credentials')
+        throw new Error(data.error || 'كلمة السر غير صحيحة')
       }
 
       router.push('/admin/dashboard')
     } catch (err: any) {
-      setError(err.message || 'Login failed.')
+      setError(err.message || 'فشل تسجيل الدخول كإدارة.')
     } finally {
       setLoading(false)
     }
@@ -45,13 +45,13 @@ export default function AdminLoginPage() {
             <Lock className="w-6 h-6" />
           </div>
           <span className="text-xs font-bold uppercase tracking-widest text-[#D4AF37]">
-            EXECUTIVE CONTROL PORTAL
+            بوابة الإدارة التنفيذية العليا
           </span>
           <h1 className="text-2xl font-black text-white">
-            Admin Authentication
+            تسجيل دخول السوبر أدمن
           </h1>
           <p className="text-xs text-slate-400">
-            Enter authorized master key to access backoffice operations.
+            أدخل كلمة السر الخاصة بالإدارة للوصول للوحة التحكم الكاملة
           </p>
         </div>
 
@@ -63,13 +63,13 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4 text-xs">
           <div className="space-y-1.5">
-            <label className="font-bold text-slate-300">Admin Password / Access Code</label>
+            <label className="font-bold text-slate-300">كلمة سر الإدارة (Admin Password)</label>
             <input
               type="password"
-              placeholder="Enter admin password (default: admin123)"
+              placeholder="أدخل كلمة السر (الافتراضية: admin123)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37] text-right"
             />
           </div>
 
@@ -80,15 +80,15 @@ export default function AdminLoginPage() {
             size="lg"
             className="w-full font-bold uppercase tracking-wider flex items-center justify-center gap-2"
           >
-            <span>{loading ? 'Authenticating...' : 'Access Admin Dashboard'}</span>
-            <ArrowRight className="w-4 h-4" />
+            <span>{loading ? 'جاري التحقق من الصلاحيات...' : 'دخول لوحة التحكم الإدارية'}</span>
+            <ArrowLeft className="w-4 h-4" />
           </LuxuryButton>
         </form>
 
         <div className="pt-4 border-t border-white/10 text-center">
           <span className="text-[11px] text-slate-500 flex items-center justify-center gap-1 font-medium">
             <Shield className="w-3.5 h-3.5 text-[#D4AF37]" />
-            256-Bit Encrypted Executive Portal
+            بوابة مشفرة بأعلى معايير الأمان 256-Bit
           </span>
         </div>
 

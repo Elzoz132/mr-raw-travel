@@ -51,8 +51,8 @@ export const AdminHeader: React.FC = () => {
             />
           </div>
           <div>
-            <span className="text-sm font-black text-white block leading-none">MR.RAW BACKOFFICE CMS</span>
-            <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-wider block mt-1">Executive Operations Hub</span>
+            <span className="text-sm font-black text-white block leading-none">لوحة التحكم التنفيذية - مستر رو</span>
+            <span className="text-[10px] text-[#D4AF37] font-bold uppercase tracking-wider block mt-1">مركز إدارة وتشغيل الرحلات والباقات</span>
           </div>
         </div>
 
