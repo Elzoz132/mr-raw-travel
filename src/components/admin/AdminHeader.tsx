@@ -15,7 +15,7 @@ export const AdminHeader: React.FC = () => {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
-    } catch {}
+    } catch { }
     window.location.href = '/'
   }
 
@@ -42,7 +42,7 @@ export const AdminHeader: React.FC = () => {
   return (
     <div className="bg-[#0B0F17]/90 backdrop-blur-md border-b border-[#D4AF37]/30 py-4 px-4 sm:px-6 lg:px-8 mb-8">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        
+
         {/* Admin Badge */}
         <div className="flex items-center gap-3">
           <div className="p-1 rounded-xl bg-gradient-to-br from-[#E5C158]/30 via-[#D4AF37]/20 to-[#B8860B]/10 border border-[#D4AF37]/40 shadow-[0_0_15px_rgba(212,175,55,0.25)]">
@@ -66,11 +66,10 @@ export const AdminHeader: React.FC = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
-                  isActive
-                    ? 'bg-[#D4AF37] text-[#0B0F17] shadow-lg font-black'
-                    : 'text-slate-300 hover:text-white hover:bg-white/5'
-                }`}
+                className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${isActive
+                  ? 'bg-[#D4AF37] text-[#0B0F17] shadow-lg font-black'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  }`}
               >
                 <span>{item.label}</span>
               </Link>
