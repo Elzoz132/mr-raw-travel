@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { prisma } from '@/lib/db'
 import { generateBookingNumber } from '@/lib/utils'
 import { upsertCustomerCrmProfile } from '@/lib/crm'
@@ -132,6 +133,28 @@ export async function POST(req: Request) {
       hotelName,
       paymentMethod
     })
+
+    // 5. Automatically set user_session cookie for customer
+    try {
+      const cookieStore = await cookies()
+      cookieStore.set('user_session', JSON.stringify({
+        id: booking.userId || undefined,
+        name: fullName,
+        email: email.toLowerCase().trim(),
+        role: 'CUSTOMER'
+      }), {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7
+      })
+      cookieStore.set('user_role', 'CUSTOMER', {
+        httpOnly: false,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7
+      })
+    } catch (e) {}
 
     return NextResponse.json({
       success: true,

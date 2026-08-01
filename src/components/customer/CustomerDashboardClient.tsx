@@ -27,9 +27,9 @@ import {
 } from 'lucide-react'
 
 export const CustomerDashboardClient: React.FC = () => {
-  const { language, wishlist, toggleWishlist } = useAppStore()
+  const { language, wishlist, toggleWishlist, currentUser, setCurrentUser } = useAppStore()
   const isArabic = language === 'ar'
-  const user = (useAppStore as any)().user || { name: 'VIP Traveler', email: 'customer@mrrawtravel.com' }
+  const user = currentUser || { name: 'VIP Traveler', email: '' }
 
   const [activeTab, setActiveTab] = useState<'bookings' | 'profile' | 'reviews' | 'wishlist' | 'vouchers'>('bookings')
   const [bookings, setBookings] = useState<any[]>([])
@@ -38,6 +38,20 @@ export const CustomerDashboardClient: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [selectedVoucher, setSelectedVoucher] = useState<any | null>(null)
   const [copiedPromo, setCopiedPromo] = useState(false)
+  const [lookupEmail, setLookupEmail] = useState('')
+  const [lookupLoading, setLookupLoading] = useState(false)
+
+  // Sync auth state with server
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     // Fetch Customer Bookings & Reviews
@@ -51,7 +65,34 @@ export const CustomerDashboardClient: React.FC = () => {
       if (tData.trips) setSavedTrips(tData.trips.filter((t: any) => wishlist.includes(t.id)))
       setLoading(false)
     })
-  }, [wishlist])
+  }, [wishlist, currentUser])
+
+  const handleLookupBookings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!lookupEmail.trim()) return
+    setLookupLoading(true)
+    try {
+      // Login or auto-fetch profile with entered email
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: lookupEmail, name: lookupEmail.split('@')[0] })
+      })
+      const data = await res.json()
+      if (data.success && data.user) {
+        setCurrentUser(data.user)
+        window.dispatchEvent(new Event('auth-state-change'))
+      }
+      // Re-fetch bookings
+      const bRes = await fetch('/api/bookings')
+      const bData = await bRes.json()
+      if (bData.bookings) setBookings(bData.bookings)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLookupLoading(false)
+    }
+  }
 
   const totalSpent = bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
   const totalTripsCount = bookings.length
@@ -157,15 +198,45 @@ export const CustomerDashboardClient: React.FC = () => {
 
           {loading ? (
             <div className="py-12 text-center text-xs text-slate-400 animate-pulse">
-              Loading your bookings...
+              جاري تحميل بياناتك وحجوزاتك...
             </div>
           ) : bookings.length === 0 ? (
-            <div className="glass-panel rounded-3xl p-8 text-center space-y-4 border border-white/10">
-              <p className="text-xs text-slate-400">You have no upcoming or past excursion bookings yet.</p>
-              <a href="/trips" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl gold-gradient-btn text-xs font-black text-[#0B0F17]">
-                <span>Explore Excursions</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
+            <div className="glass-panel rounded-3xl p-8 border border-[#D4AF37]/30 space-y-6 max-w-2xl mx-auto text-center">
+              <div className="w-16 h-16 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center mx-auto">
+                <QrCode className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white">استعراض وعرض جميع حجوزاتك وفواتير الـ QR</h3>
+                <p className="text-xs text-slate-300">
+                  أدخل بريدك الإلكتروني الذي قمت بالحجز به لعرض كافة تذاكر وفواتير رحلاتك المعتمدة فوراً:
+                </p>
+              </div>
+
+              <form onSubmit={handleLookupBookings} className="flex flex-col sm:flex-row items-center gap-3">
+                <input
+                  type="email"
+                  required
+                  placeholder="أدخل بريدك الإلكتروني هنا (e.g. zeyad@example.com)"
+                  value={lookupEmail}
+                  onChange={(e) => setLookupEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:outline-none focus:border-[#D4AF37]"
+                />
+                <button
+                  type="submit"
+                  disabled={lookupLoading}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl gold-gradient-btn text-xs font-black text-[#0B0F17] shrink-0"
+                >
+                  {lookupLoading ? 'جاري العرض...' : 'عرض التذاكر فوراً 👑'}
+                </button>
+              </form>
+
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                <span>أو تصفح الرحلات المتاحة:</span>
+                <a href="/trips" className="text-[#D4AF37] font-bold underline flex items-center gap-1">
+                  <span>تصفح كافة الرحلات</span>
+                  <ArrowRight className="w-4 h-4 rotate-180" />
+                </a>
+              </div>
             </div>
           ) : (
             bookings.map((b) => (
@@ -307,7 +378,7 @@ export const CustomerDashboardClient: React.FC = () => {
           voucher={{
             bookingNumber: selectedVoucher.bookingNumber || selectedVoucher.id.slice(0, 8),
             leadPassengerName: user?.name || selectedVoucher.leadPassengerName || 'Guest Traveler',
-            leadPhone: selectedVoucher.leadPhone || user?.phone,
+            leadPhone: selectedVoucher.leadPhone || (user as any)?.phone,
             leadEmail: selectedVoucher.leadEmail || user?.email,
             tripTitle: selectedVoucher.tripTitle || selectedVoucher.name || 'Hurghada Red Sea VIP Trip',
             tripDate: selectedVoucher.travelDate || selectedVoucher.tripDate,
