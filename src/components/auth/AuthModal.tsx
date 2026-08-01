@@ -14,7 +14,7 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const router = useRouter()
-  const { language } = useAppStore()
+  const { language, setCurrentUser } = useAppStore()
   const isArabic = language === 'ar'
 
   const [mode, setMode] = useState<'LOGIN' | 'SIGNUP' | 'CHANGE_PASS'>('LOGIN')
@@ -52,6 +52,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           throw new Error(data.error || 'Invalid credentials')
         }
 
+        if (data.user) {
+          setCurrentUser(data.user)
+        }
+
         window.dispatchEvent(new Event('auth-state-change'))
         onClose()
         if (onSuccess) onSuccess()
@@ -72,6 +76,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         const data = await res.json()
         if (!res.ok || !data.success) {
           throw new Error(data.error || 'Signup failed.')
+        }
+
+        if (data.user) {
+          setCurrentUser(data.user)
         }
 
         window.dispatchEvent(new Event('auth-state-change'))

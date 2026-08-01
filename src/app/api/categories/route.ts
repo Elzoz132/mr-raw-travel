@@ -14,8 +14,15 @@ export async function GET() {
       orderBy: { order: 'asc' }
     })
 
-    return NextResponse.json({ success: true, categories })
+    return NextResponse.json(
+      { success: true, categories },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    )
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Error fetching categories API:', error)
+    return NextResponse.json(
+      { success: false, categories: [], error: error.message },
+      { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    )
   }
 }

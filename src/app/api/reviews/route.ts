@@ -63,7 +63,11 @@ export async function GET(req: Request) {
       }))
     })
   } catch (error: any) {
-    return NextResponse.json({ isEligible: false, error: error.message }, { status: 500 })
+    console.error('Error fetching reviews API:', error)
+    return NextResponse.json(
+      { success: false, reviews: [], isEligible: false, error: error.message },
+      { status: 200, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    )
   }
 }
 

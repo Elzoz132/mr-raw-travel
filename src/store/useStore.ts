@@ -45,6 +45,13 @@ export interface BookingDraft {
   receiptUrl?: string
 }
 
+export interface UserProfile {
+  id?: string
+  name: string
+  email: string
+  role: string
+}
+
 interface AppState {
   currency: Currency
   setCurrency: (c: Currency) => void
@@ -55,6 +62,8 @@ interface AppState {
   bookingDraft: BookingDraft
   updateBookingDraft: (partial: Partial<BookingDraft>) => void
   resetBookingDraft: () => void
+  currentUser: UserProfile | null
+  setCurrentUser: (u: UserProfile | null) => void
   isSearchOpen: boolean
   setSearchOpen: (open: boolean) => void
 }
@@ -85,6 +94,8 @@ export const useAppStore = create<AppState>()(
         set({
           bookingDraft: { adults: 2, children: 0 },
         }),
+      currentUser: null,
+      setCurrentUser: (currentUser) => set({ currentUser }),
       isSearchOpen: false,
       setSearchOpen: (isSearchOpen) => set({ isSearchOpen }),
     }),
@@ -95,6 +106,7 @@ export const useAppStore = create<AppState>()(
         language: state.language,
         wishlist: state.wishlist,
         bookingDraft: state.bookingDraft,
+        currentUser: state.currentUser,
       }),
     }
   )

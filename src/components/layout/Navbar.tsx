@@ -22,7 +22,7 @@ import {
 export const Navbar: React.FC = () => {
   const router = useRouter()
   const pathname = usePathname()
-  const { currency, setCurrency, language, setLanguage, setSearchOpen } = useAppStore()
+  const { currency, setCurrency, language, setLanguage, setSearchOpen, currentUser, setCurrentUser } = useAppStore()
 
   const t = dictionaries[language].nav
   const isArabic = language === 'ar'
@@ -31,20 +31,14 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
 
-  // Auth User State
-  const [currentUser, setCurrentUser] = useState<{ id?: string; name: string; email: string; role: string } | null>(null)
-
   const checkUserAuth = async () => {
     try {
       const res = await fetch('/api/auth/me')
       const data = await res.json()
       if (data.authenticated && data.user) {
         setCurrentUser(data.user)
-      } else {
-        setCurrentUser(null)
       }
     } catch (e) {
-      setCurrentUser(null)
     }
   }
 
@@ -57,14 +51,10 @@ export const Navbar: React.FC = () => {
           if (isMounted) {
             if (data.authenticated && data.user) {
               setCurrentUser(data.user)
-            } else {
-              setCurrentUser(null)
             }
           }
         })
-        .catch(() => {
-          if (isMounted) setCurrentUser(null)
-        })
+        .catch(() => {})
     }
 
     updateAuth()
