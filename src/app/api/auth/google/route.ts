@@ -10,8 +10,9 @@ export async function GET(req: Request) {
     process.env.GOOGLE_CLIENT_ID ||
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
-  const host = req.headers.get('host') || 'mr-raw-travel.vercel.app'
-  const protocol = host.includes('localhost') ? 'http' : 'https'
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'mr-raw-travel.vercel.app'
+  const protoHeader = req.headers.get('x-forwarded-proto')
+  const protocol = protoHeader ? protoHeader : (host.includes('localhost') ? 'http' : 'https')
   const redirectUri = `${protocol}://${host}/api/auth/callback/google`
 
   if (!clientId) {

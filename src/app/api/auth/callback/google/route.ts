@@ -14,8 +14,9 @@ const ADMIN_EMAILS = [
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
-  const host = req.headers.get('host') || 'mr-raw-travel.vercel.app'
-  const protocol = host.includes('localhost') ? 'http' : 'https'
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'mr-raw-travel.vercel.app'
+  const protoHeader = req.headers.get('x-forwarded-proto')
+  const protocol = protoHeader ? protoHeader : (host.includes('localhost') ? 'http' : 'https')
   const redirectUri = `${protocol}://${host}/api/auth/callback/google`
 
   if (!code) {
