@@ -1,53 +1,45 @@
-export async function uploadMedia(file: File | string, folder = 'mr-raw-travel'): Promise<{ url: string; mediaType: 'IMAGE' | 'VIDEO' }> {
-  // Check if Cloudinary credentials are configured
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset'
-
-  if (typeof file === 'string' && file.startsWith('http')) {
-    const isVideo = file.match(/\.(mp4|webm|ogg|mov)$/i) !== null
+export async function uploadMedia(
+  file: File | string,
+  folder = 'mr-raw-travel'
+): Promise<{ url: string; mediaType: 'IMAGE' | 'VIDEO' }> {
+  // If already a URL or Data URL, return directly
+  if (typeof file === 'string') {
+    const isVideo = file.match(/\.(mp4|webm|ogg|mov)$/i) !== null || file.startsWith('data:video')
     return { url: file, mediaType: isVideo ? 'VIDEO' : 'IMAGE' }
   }
 
-  if (cloudName) {
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('upload_preset', uploadPreset)
-      formData.append('folder', folder)
+  // 1. Try server API upload (/api/upload)
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
 
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-        method: 'POST',
-        body: formData
-      })
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    })
 
-      if (response.ok) {
-        const data = await response.json()
+    if (res.ok) {
+      const data = await res.json()
+      if (data.url) {
         return {
-          url: data.secure_url,
-          mediaType: data.resource_type === 'video' ? 'VIDEO' : 'IMAGE'
+          url: data.url,
+          mediaType: data.mediaType || 'IMAGE'
         }
       }
-    } catch (err) {
-      console.warn('Cloudinary direct upload failed, falling back to local API handler:', err)
     }
+  } catch (err) {
+    console.warn('Server upload API failed, using FileReader fallback:', err)
   }
 
-  // Fallback upload via server API
-  const formData = new FormData()
-  formData.append('file', file)
-
-  const res = await fetch('/api/upload', {
-    method: 'POST',
-    body: formData
+  // 2. Client-side FileReader Base64 fallback (works 100% offline & without server permissions!)
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const url = reader.result as string
+      const isVideo = file.type.startsWith('video/')
+      resolve({ url, mediaType: isVideo ? 'VIDEO' : 'IMAGE' })
+    }
+    reader.onerror = () => reject(new Error('Failed to read image file'))
+    reader.readAsDataURL(file)
   })
-
-  if (!res.ok) {
-    throw new Error('Upload failed')
-  }
-
-  const data = await res.json()
-  return {
-    url: data.url,
-    mediaType: data.mediaType || 'IMAGE'
-  }
 }

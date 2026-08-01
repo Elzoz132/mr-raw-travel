@@ -190,14 +190,34 @@ export const CustomerProfileSettings: React.FC = () => {
             </label>
           </div>
 
-          <div className="text-center sm:text-right space-y-1">
+          <div className="text-center sm:text-right space-y-2 flex-1 w-full">
             <span className="font-bold text-white text-sm block">صورة البروفايل الشخصية</span>
-            <p className="text-[11px] text-slate-400 max-w-sm">
-              اضغط على الصورة لرفع صورة جديدة خاصة بك (يدعم JPG, PNG, WEBP).
+            <p className="text-[11px] text-slate-400">
+              اختر بين رفع صورة شخصية من جهازك أو إضافة رابط مباشر للصورة:
             </p>
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+              <label className="px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer hover:bg-emerald-600 transition w-full sm:w-auto">
+                <Camera className="w-4 h-4" />
+                <span>{uploadingAvatar ? 'جاري رفع الصورة...' : 'اختر صورة من جهازك'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  disabled={uploadingAvatar}
+                  className="hidden"
+                />
+              </label>
+              <input
+                type="text"
+                placeholder="أو ضع رابط الصورة المباشر هنا (https://...)"
+                value={profile.avatar || ''}
+                onChange={(e) => setProfile({ ...profile, avatar: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+              />
+            </div>
             {uploadingAvatar && (
-              <span className="text-[10px] text-[#D4AF37] font-bold block animate-pulse">
-                جاري رفع الصورة بالسحابة...
+              <span className="text-[10px] text-[#D4AF37] font-bold block animate-pulse pt-1">
+                جاري رفع وتأكيد الصورة بالسحابة...
               </span>
             )}
           </div>

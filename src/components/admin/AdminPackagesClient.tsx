@@ -744,21 +744,66 @@ export const AdminPackagesClient: React.FC = () => {
 
                 {/* Package Photos Upload Gallery (صور الباقة) */}
                 <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5 text-xs">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
-                      معرض صور الباقة والرحلة (Package Photo Gallery)
+                      معرض صور الباقة والرحلة (رفع من الجهاز أو إدخال رابط مباشر)
                     </span>
-                    <label className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:bg-emerald-600 transition">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{uploadingPhoto ? 'جاري رفع الصورة...' : 'إضافة صورة جديدة'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        disabled={uploadingPhoto}
-                        className="hidden"
-                      />
-                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:bg-emerald-600 transition">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{uploadingPhoto ? 'جاري الرفع...' : 'رفع صورة من الجهاز'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          disabled={uploadingPhoto}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Add URL Link Input */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      id="package_new_photo_url"
+                      placeholder="أو ألصق رابط مباشر للصورة هنا (https://...) واضغط إضافة"
+                      className="flex-1 px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          const val = (e.target as HTMLInputElement).value.trim()
+                          if (val) {
+                            let photosArr: string[] = []
+                            if (editingPkg.photos) {
+                              try { photosArr = JSON.parse(editingPkg.photos) } catch { photosArr = [editingPkg.photos] }
+                            }
+                            photosArr.push(val)
+                            setEditingPkg({ ...editingPkg, photos: JSON.stringify(photosArr) })
+                            ;(e.target as HTMLInputElement).value = ''
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inputEl = document.getElementById('package_new_photo_url') as HTMLInputElement
+                        if (inputEl && inputEl.value.trim()) {
+                          let photosArr: string[] = []
+                          if (editingPkg.photos) {
+                            try { photosArr = JSON.parse(editingPkg.photos) } catch { photosArr = [editingPkg.photos] }
+                          }
+                          photosArr.push(inputEl.value.trim())
+                          setEditingPkg({ ...editingPkg, photos: JSON.stringify(photosArr) })
+                          inputEl.value = ''
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#D4AF37] text-[#0B0F17] font-bold text-xs hover:bg-[#E5C158] transition"
+                    >
+                      + إضافة الرابط
+                    </button>
                   </div>
 
                   {/* Photo Thumbnails Preview */}
