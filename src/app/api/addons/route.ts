@@ -10,6 +10,7 @@ export async function GET() {
     })
     return NextResponse.json({ success: true, addons })
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    console.error('Error fetching public addons:', error)
+    return NextResponse.json({ success: true, addons: [] })
   }
 }

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
 import { Plus, Trash2, Edit, Sparkles, Check, DollarSign, Layers } from 'lucide-react'
 
+import { AdminHeader } from '@/components/admin/AdminHeader'
+
 interface Addon {
   id: string
   nameEn: string
@@ -41,10 +43,11 @@ export const AdminAddonsClient: React.FC = () => {
     try {
       const res = await fetch('/api/admin/addons')
       const data = await res.json()
-      if (data.success) {
+      if (data.success && Array.isArray(data.addons)) {
         setAddons(data.addons)
       }
     } catch {
+      setAddons([])
     } finally {
       setLoading(false)
     }
@@ -129,7 +132,8 @@ export const AdminAddonsClient: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      <AdminHeader />
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel rounded-3xl p-6 border border-[#D4AF37]/30">

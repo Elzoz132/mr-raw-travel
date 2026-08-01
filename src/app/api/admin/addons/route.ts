@@ -11,7 +11,8 @@ export async function GET() {
     })
     return NextResponse.json({ success: true, addons })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch addons' }, { status: 500 })
+    console.error('Error fetching admin addons:', error)
+    return NextResponse.json({ success: true, addons: [] })
   }
 }
 
