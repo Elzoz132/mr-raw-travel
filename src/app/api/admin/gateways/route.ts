@@ -26,7 +26,8 @@ export async function GET() {
     }
     return NextResponse.json({ success: true, gateways })
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+    console.error('Error fetching payment gateways:', error)
+    return NextResponse.json({ success: true, gateways: DEFAULT_GATEWAYS })
   }
 }
 

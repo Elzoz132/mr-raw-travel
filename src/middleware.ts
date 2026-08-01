@@ -9,6 +9,8 @@ const ROLE_ROUTE_PERMISSIONS: Record<string, string[]> = {
     '/admin/content',
     '/admin/footer',
     '/admin/packages',
+    '/admin/addons',
+    '/admin/trips',
     '/admin/reviews',
     '/admin/gallery',
     '/admin/bookings',
@@ -27,11 +29,16 @@ const ROLE_ROUTE_PERMISSIONS: Record<string, string[]> = {
     '/admin/content',
     '/admin/footer',
     '/admin/packages',
+    '/admin/addons',
+    '/admin/trips',
     '/admin/reviews',
     '/admin/gallery',
     '/admin/bookings',
     '/admin/crm',
-    '/admin/coupons'
+    '/admin/coupons',
+    '/admin/gateways',
+    '/admin/settings',
+    '/admin/users'
   ],
   CONTENT_EDITOR: [
     '/admin/dashboard',
@@ -39,6 +46,8 @@ const ROLE_ROUTE_PERMISSIONS: Record<string, string[]> = {
     '/admin/content',
     '/admin/footer',
     '/admin/packages',
+    '/admin/addons',
+    '/admin/trips',
     '/admin/gallery',
     '/admin/settings'
   ],
@@ -60,6 +69,11 @@ export function middleware(req: NextRequest) {
 
     if (!adminSession && (!userRoleCookie || userRoleCookie === 'CUSTOMER')) {
       return NextResponse.redirect(new URL('/admin/login', req.url))
+    }
+
+    // If authenticated via admin session cookie or super_admin/admin role cookie, grant access
+    if (adminSession === 'authenticated' || userRoleCookie === 'SUPER_ADMIN' || userRoleCookie === 'ADMIN') {
+      return NextResponse.next()
     }
 
     const effectiveRole = userRoleCookie && ROLE_ROUTE_PERMISSIONS[userRoleCookie] ? userRoleCookie : 'SUPER_ADMIN'

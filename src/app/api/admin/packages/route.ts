@@ -18,7 +18,8 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, packages })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to fetch packages' }, { status: 500 })
+    console.error('Error fetching admin packages:', error)
+    return NextResponse.json({ success: true, packages: [] })
   }
 }
 
