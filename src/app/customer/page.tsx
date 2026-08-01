@@ -5,6 +5,8 @@ import { formatCurrencyPrice, Currency } from '@/lib/currency'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
 import { Calendar, MapPin, QrCode, MessageSquare, PhoneCall, ShieldCheck, User } from 'lucide-react'
 
+import { CustomerProfileSettings } from '@/components/customer/CustomerProfileSettings'
+
 export const dynamic = 'force-dynamic'
 
 export default async function CustomerDashboardPage() {
@@ -73,7 +75,7 @@ export default async function CustomerDashboardPage() {
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              {currentUser?.email ? currentUser.email : 'عميل مسجل ومحمي ١٠٠% في منظومة Mr.Raw Travel'}
+              {currentUser?.email ? currentUser.email : 'عميل مسجل ومحمي ١٠0% في منظومة Mr.Raw Travel'}
             </p>
           </div>
         </div>
@@ -91,6 +93,9 @@ export default async function CustomerDashboardPage() {
           </a>
         </div>
       </div>
+
+      {/* Customer Profile & Settings Component */}
+      {currentUser && <CustomerProfileSettings />}
 
       {/* Bookings List Section */}
       <div className="space-y-6">

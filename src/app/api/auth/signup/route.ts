@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { name, email, password, phone, isGoogleAuth } = body
+    const { name, email, password, phone, country, nationality, isGoogleAuth } = body
 
     if (!email) {
       return NextResponse.json({ success: false, error: 'Email is required.' }, { status: 400 })
@@ -29,6 +29,8 @@ export async function POST(req: Request) {
           email: cleanEmail,
           password: password || 'oauth_google_secured',
           phone: phone || null,
+          country: country || 'Germany',
+          nationality: nationality || country || 'Germany',
           role: 'CUSTOMER'
         }
       })
