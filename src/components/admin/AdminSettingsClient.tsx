@@ -23,6 +23,8 @@ export const AdminSettingsClient: React.FC = () => {
     google_maps_key: '',
     whatsapp_number: '01070657476',
     support_email: 'info@mrrawtravel.com',
+    gmail_user: '',
+    gmail_app_password: '',
     default_currency: 'USD',
     maintenance_mode: 'false'
   })
@@ -212,6 +214,39 @@ export const AdminSettingsClient: React.FC = () => {
                   className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-mono"
                 />
               </div>
+            </div>
+
+            {/* Gmail Real OTP Settings Box */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-[#D4AF37]/30 space-y-4">
+              <div className="flex items-center gap-2 text-[#D4AF37] font-bold text-xs">
+                <Mail className="w-4 h-4" />
+                <span>إعدادات إرسال إيميلات الـ OTP الحقيقية إلى الجيميل (Gmail Real OTP SMTP)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-semibold">بريد الجيميل الرسمي (Gmail Email)</label>
+                  <input
+                    type="email"
+                    value={settings.gmail_user || ''}
+                    onChange={(e) => setSettings({ ...settings, gmail_user: e.target.value })}
+                    placeholder="e.g. mrrawtravel@gmail.com"
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-300 font-semibold">كلمة سر التطبيقات (Gmail App Password)</label>
+                  <input
+                    type="password"
+                    value={settings.gmail_app_password || ''}
+                    onChange={(e) => setSettings({ ...settings, gmail_app_password: e.target.value })}
+                    placeholder="xxxx xxxx xxxx xxxx"
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-mono"
+                  />
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400">
+                💡 للحصول على كلمات سر التطبيقات من جوجل: افتح حسابك في Google ➔ الأمان (Security) ➔ التحقق بخصوصيتين (2-Step Verification) ➔ كلمة سر التطبيقات (App Passwords) ➔ أنشئ كلمة سر جديدة وضعها هنا.
+              </p>
             </div>
 
             {/* Maintenance Mode Toggle */}
