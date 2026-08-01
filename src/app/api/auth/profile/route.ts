@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/db'
+import { prisma, withDbRetry } from '@/lib/db'
 import { ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
@@ -25,25 +25,29 @@ export async function GET() {
       return NextResponse.json({ success: false, authenticated: false, user: null }, { status: 200 })
     }
 
-    let user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          session?.id ? { id: session.id } : undefined,
-          email ? { email: email.toLowerCase() } : undefined
-        ].filter(Boolean) as any
-      }
-    })
-
-    if (!user && email) {
-      user = await prisma.user.create({
-        data: {
-          name: session?.name || email.split('@')[0],
-          email: email.toLowerCase(),
-          password: 'authenticated_user',
-          role: session?.role || 'CUSTOMER',
-          country: 'Egypt'
+    let user = await withDbRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          OR: [
+            session?.id ? { id: session.id } : undefined,
+            email ? { email: email.toLowerCase() } : undefined
+          ].filter(Boolean) as any
         }
       })
+    )
+
+    if (!user && email) {
+      user = await withDbRetry(() =>
+        prisma.user.create({
+          data: {
+            name: session?.name || email.split('@')[0],
+            email: email.toLowerCase(),
+            password: 'authenticated_user',
+            role: session?.role || 'CUSTOMER',
+            country: 'Egypt'
+          }
+        })
+      )
     }
 
     return NextResponse.json({ success: true, user })
@@ -80,41 +84,47 @@ export async function PUT(req: Request) {
     }
     const { name, phone, whatsApp, country, nationality, avatar, currentPassword, newPassword } = body
 
-    let user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          session?.id ? { id: session.id } : undefined,
-          email ? { email: email.toLowerCase() } : undefined
-        ].filter(Boolean) as any
-      }
-    })
+    let user = await withDbRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          OR: [
+            session?.id ? { id: session.id } : undefined,
+            email ? { email: email.toLowerCase() } : undefined
+          ].filter(Boolean) as any
+        }
+      })
+    )
 
     if (!user && email) {
-      user = await prisma.user.create({
-        data: {
-          name: name || session?.name || email.split('@')[0],
-          email: email.toLowerCase(),
-          password: newPassword || 'authenticated_user',
-          role: session?.role || 'CUSTOMER',
-          phone: phone || '',
-          whatsApp: whatsApp || phone || '',
-          country: country || 'Egypt',
-          avatar: avatar || null
-        }
-      })
+      user = await withDbRetry(() =>
+        prisma.user.create({
+          data: {
+            name: name || session?.name || email.split('@')[0],
+            email: email.toLowerCase(),
+            password: newPassword || 'authenticated_user',
+            role: session?.role || 'CUSTOMER',
+            phone: phone || '',
+            whatsApp: whatsApp || phone || '',
+            country: country || 'Egypt',
+            avatar: avatar || null
+          }
+        })
+      )
     } else if (user) {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          ...(name && { name }),
-          ...(phone !== undefined && { phone }),
-          ...(whatsApp !== undefined && { whatsApp }),
-          ...(country !== undefined && { country }),
-          ...(nationality !== undefined && { nationality }),
-          ...(avatar !== undefined && { avatar }),
-          ...(newPassword && { password: newPassword })
-        }
-      })
+      user = await withDbRetry(() =>
+        prisma.user.update({
+          where: { id: user!.id },
+          data: {
+            ...(name && { name }),
+            ...(phone !== undefined && { phone }),
+            ...(whatsApp !== undefined && { whatsApp }),
+            ...(country !== undefined && { country }),
+            ...(nationality !== undefined && { nationality }),
+            ...(avatar !== undefined && { avatar }),
+            ...(newPassword && { password: newPassword })
+          }
+        })
+      )
     }
 
     // Update Session Cookie

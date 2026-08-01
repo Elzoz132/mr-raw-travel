@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/db'
+import { prisma, withDbRetry } from '@/lib/db'
 import { ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
 
 export async function POST(req: Request) {
@@ -45,13 +45,15 @@ export async function POST(req: Request) {
       })
     }
 
-    // Check database user
-    const user = await prisma.user.findUnique({
-      where: { email: cleanEmail }
-    })
+    // Check database user with connection retry wrapper
+    const user = await withDbRetry(() =>
+      prisma.user.findUnique({
+        where: { email: cleanEmail }
+      })
+    )
 
     if (!user || user.password !== password) {
-      return NextResponse.json({ success: false, error: 'Invalid email or password.' }, { status: 401 })
+      return NextResponse.json({ success: false, error: 'اسم المستخدم أو كلمة السر غير صحيحة.' }, { status: 401 })
     }
 
     const cookieStore = await cookies()
@@ -88,6 +90,6 @@ export async function POST(req: Request) {
     })
   } catch (err: any) {
     console.error('Error during auth login:', err)
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+    return NextResponse.json({ success: false, error: err.message || 'خطأ في الاتصال بالخادم' }, { status: 500 })
   }
 }

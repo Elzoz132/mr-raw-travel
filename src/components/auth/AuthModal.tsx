@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useStore'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
-import { X, Lock, Mail, User, Phone, Globe, ArrowLeft, CheckCircle, ShieldCheck } from 'lucide-react'
+import { X, Lock, Mail, User, Phone, Globe, ArrowLeft, CheckCircle, ShieldCheck, KeyRound, RotateCcw } from 'lucide-react'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -31,7 +31,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const { language, setCurrentUser } = useAppStore()
   const isArabic = language === 'ar'
 
-  const [mode, setMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN')
+  const [mode, setMode] = useState<'LOGIN' | 'SIGNUP' | 'OTP_VERIFY'>('LOGIN')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,6 +40,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     country: 'Egypt'
   })
 
+  const [otpCode, setOtpCode] = useState('')
+  const [demoOtpCode, setDemoOtpCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
@@ -62,7 +64,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         const data = await res.json()
         if (!res.ok || !data.success) {
-          throw new Error(data.error || (isArabic ? 'بيانات الدخول غير صحيحة' : 'Invalid credentials'))
+          throw new Error(data.error || (isArabic ? 'اسم المستخدم أو كلمة السر غير صحيحة' : 'Invalid credentials'))
         }
 
         if (data.user) {
@@ -76,37 +78,98 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         router.refresh()
 
       } else if (mode === 'SIGNUP') {
-        const res = await fetch('/api/auth/signup', {
+        // Step 1: Send OTP to Gmail
+        const res = await fetch('/api/auth/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: formData.name,
             email: formData.email,
-            password: formData.password,
-            phone: formData.phone,
-            country: formData.country,
-            nationality: formData.country
+            name: formData.name,
+            password: formData.password
           })
         })
 
         const data = await res.json()
         if (!res.ok || !data.success) {
-          throw new Error(data.error || (isArabic ? 'فشل إنشاء الحساب' : 'Signup failed.'))
+          throw new Error(data.error || (isArabic ? 'فشل إرسال رمز التحقيق' : 'Failed to send OTP code'))
         }
 
-        if (data.user) {
-          setCurrentUser(data.user)
+        if (data.otpDemoCode) {
+          setDemoOtpCode(data.otpDemoCode)
         }
 
-        setSuccessMsg(isArabic ? 'تم إنشاء حسابك بنجاح!' : 'Account created successfully!')
-        window.dispatchEvent(new Event('auth-state-change'))
+        setSuccessMsg(data.message || (isArabic ? 'تم إرسال رمز التحقيق إلى بريدك الإلكتروني' : 'OTP code sent to your email.'))
+        setMode('OTP_VERIFY')
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || (isArabic ? 'حدث خطأ أثناء الاتصال.' : 'An error occurred.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!otpCode || otpCode.length < 6) {
+      setErrorMsg(isArabic ? 'يرجى إدخال رمز التحقيق المكون من 6 أرقام.' : 'Please enter the 6-digit OTP code.')
+      return
+    }
+
+    setLoading(true)
+    setErrorMsg('')
+    setSuccessMsg('')
+
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          otpCode: otpCode.trim()
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || (isArabic ? 'رمز التحقيق غير صحيح.' : 'Invalid OTP code.'))
+      }
+
+      if (data.user) {
+        setCurrentUser(data.user)
+      }
+
+      setSuccessMsg(isArabic ? 'تم تفعيل حسابك بنجاح! جاري التوجيه...' : 'Account verified successfully!')
+      window.dispatchEvent(new Event('auth-state-change'))
+
+      setTimeout(() => {
         onClose()
         if (onSuccess) onSuccess()
         router.push('/customer')
         router.refresh()
-      }
+      }, 1000)
+
     } catch (err: any) {
-      setErrorMsg(err.message || (isArabic ? 'حدث خطأ أثناء الاتصال.' : 'An error occurred.'))
+      setErrorMsg(err.message || (isArabic ? 'رمز التحقيق غير صحيح.' : 'Invalid OTP code.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    setLoading(true)
+    setErrorMsg('')
+    setSuccessMsg('')
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, name: formData.name })
+      })
+      const data = await res.json()
+      if (data.otpDemoCode) setDemoOtpCode(data.otpDemoCode)
+      setSuccessMsg(isArabic ? 'تم إرسال رمز جديد إلى بريدك الإلكتروني!' : 'New OTP sent to your email!')
+    } catch (err: any) {
+      setErrorMsg(err.message || 'فشل إرسال الرمز')
     } finally {
       setLoading(false)
     }
@@ -137,68 +200,66 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <h2 className="text-2xl font-black text-white">
             {mode === 'LOGIN'
               ? (isArabic ? 'تسجيل الدخول للحساب' : 'Sign In to Your Account')
-              : (isArabic ? 'إنشاء حساب مسافر جديد' : 'Create New Traveler Account')}
+              : mode === 'SIGNUP'
+              ? (isArabic ? 'إنشاء حساب مسافر جديد' : 'Create New Traveler Account')
+              : (isArabic ? 'تأكيد الحساب برمز الـ OTP ✉️' : 'Gmail OTP Verification')}
           </h2>
           <p className="text-xs text-slate-400">
-            {isArabic ? 'استمتع بإدارة حجوزاتك، العروض الحصرية، والتأكيد الفوري' : 'Access your bookings, VIP perks, and instant vouchers'}
+            {mode === 'OTP_VERIFY'
+              ? (isArabic ? `أدخل رمز التحقيق المكون من 6 أرقام المرسل إلى: ${formData.email}` : `Enter 6-digit OTP sent to: ${formData.email}`)
+              : (isArabic ? 'استمتع بإدارة حجوزاتك، العروض الحصرية، والتأكيد الفوري' : 'Access your bookings, VIP perks, and instant vouchers')}
           </p>
         </div>
 
-        {/* Mode Selector Tabs */}
-        <div className="grid grid-cols-2 p-1 rounded-2xl bg-white/5 border border-white/10 text-xs font-bold">
-          <button
-            type="button"
-            onClick={() => { setMode('LOGIN'); setErrorMsg('') }}
-            className={`py-2 rounded-xl transition-all ${
-              mode === 'LOGIN' ? 'bg-[#D4AF37] text-[#0B0F17] font-black shadow-md' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {isArabic ? 'تسجيل الدخول' : 'Sign In'}
-          </button>
-          <button
-            type="button"
-            onClick={() => { setMode('SIGNUP'); setErrorMsg('') }}
-            className={`py-2 rounded-xl transition-all ${
-              mode === 'SIGNUP' ? 'bg-[#D4AF37] text-[#0B0F17] font-black shadow-md' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {isArabic ? 'إنشاء حساب جديد' : 'Create Account'}
-          </button>
-        </div>
+        {/* Mode Selector Tabs (only for Login/Signup) */}
+        {mode !== 'OTP_VERIFY' && (
+          <div className="grid grid-cols-2 p-1 rounded-2xl bg-white/5 border border-white/10 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => { setMode('LOGIN'); setErrorMsg(''); setSuccessMsg('') }}
+              className={`py-2 rounded-xl transition-all ${
+                mode === 'LOGIN' ? 'bg-[#D4AF37] text-[#0B0F17] font-black shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {isArabic ? 'تسجيل الدخول' : 'Sign In'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('SIGNUP'); setErrorMsg(''); setSuccessMsg('') }}
+              className={`py-2 rounded-xl transition-all ${
+                mode === 'SIGNUP' ? 'bg-[#D4AF37] text-[#0B0F17] font-black shadow-md' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {isArabic ? 'إنشاء حساب جديد' : 'Create Account'}
+            </button>
+          </div>
+        )}
 
         {/* Single Click Google Sign-in */}
-        <button
-          type="button"
-          onClick={handleGoogleAuth}
-          className="w-full py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.15C3.25 21.3 7.31 24 12 24z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.27C.46 8.2.01 10.05.01 12c0 1.95.45 3.8 1.26 5.42l4.01-3.15z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.58l4.01 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-            />
-          </svg>
-          <span>{isArabic ? 'متابعة بضغطة واحدة بحساب Google' : 'Continue with Google'}</span>
-        </button>
+        {mode !== 'OTP_VERIFY' && (
+          <>
+            <button
+              type="button"
+              onClick={handleGoogleAuth}
+              className="w-full py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/15 text-white font-bold text-xs flex items-center justify-center gap-3 transition-all"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.15C3.25 21.3 7.31 24 12 24z" />
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.27C.46 8.2.01 10.05.01 12c0 1.95.45 3.8 1.26 5.42l4.01-3.15z" />
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.58l4.01 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+              </svg>
+              <span>{isArabic ? 'متابعة بضغطة واحدة بحساب Google' : 'Continue with Google'}</span>
+            </button>
 
-        <div className="relative flex items-center justify-center">
-          <div className="border-t border-white/10 w-full"></div>
-          <span className="bg-[#0B0F17] px-3 text-[10px] text-slate-500 font-bold uppercase tracking-wider absolute">
-            {isArabic ? 'أو بالبريد الإلكتروني' : 'OR WITH EMAIL'}
-          </span>
-        </div>
+            <div className="relative flex items-center justify-center">
+              <div className="border-t border-white/10 w-full"></div>
+              <span className="bg-[#0B0F17] px-3 text-[10px] text-slate-500 font-bold uppercase tracking-wider absolute">
+                {isArabic ? 'أو بالبريد الإلكتروني' : 'OR WITH EMAIL'}
+              </span>
+            </div>
+          </>
+        )}
 
         {errorMsg && (
           <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
@@ -208,113 +269,183 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         {successMsg && (
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-center flex items-center justify-center gap-2">
-            <CheckCircle className="w-4 h-4" />
+            <CheckCircle className="w-4 h-4 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          
-          {mode === 'SIGNUP' && (
-            <div className="space-y-1">
-              <label className="font-bold text-slate-300">{isArabic ? 'الاسم بالكامل' : 'Full Name'}</label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+        {/* OTP VERIFICATION STEP */}
+        {mode === 'OTP_VERIFY' ? (
+          <form onSubmit={handleVerifyOtpSubmit} className="space-y-5 text-xs">
+            {demoOtpCode && (
+              <div className="p-3 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/40 text-center space-y-1">
+                <span className="text-[10px] font-bold text-[#D4AF37] block">🔑 رمز التحقيق للتأكيد السريع (OTP Code):</span>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="font-mono text-base font-black text-white bg-black/60 px-3 py-1 rounded-lg border border-[#D4AF37]/40">{demoOtpCode}</span>
+                  <button
+                    type="button"
+                    onClick={() => setOtpCode(demoOtpCode)}
+                    className="px-2.5 py-1 rounded bg-[#D4AF37] text-[#0B0F17] font-bold text-[10px]"
+                  >
+                    تعبئة الرمز تلقائياً
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2 text-center">
+              <label className="font-bold text-slate-200 text-xs block">
+                {isArabic ? 'أدخل رمز التحقيق الـ 6 أرقام:' : 'Enter 6-Digit OTP Code:'}
+              </label>
+              <div className="relative max-w-xs mx-auto">
+                <KeyRound className="w-5 h-5 text-[#D4AF37] absolute left-3.5 top-3.5" />
                 <input
                   type="text"
+                  maxLength={6}
                   required
-                  placeholder={isArabic ? 'أدخل اسمك بالكامل' : 'Enter your full name'}
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="123456"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  className="w-full text-center tracking-[8px] font-mono text-xl font-black py-3 rounded-2xl bg-white/5 border border-[#D4AF37]/40 text-white focus:outline-none focus:border-[#D4AF37]"
+                />
+              </div>
+            </div>
+
+            <LuxuryButton
+              type="submit"
+              disabled={loading}
+              variant="gold"
+              size="lg"
+              className="w-full font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+            >
+              <span>{loading ? (isArabic ? 'جاري التحقق...' : 'Verifying...') : (isArabic ? 'تأكيد وتفعيل الحساب 👑' : 'Verify & Activate Account')}</span>
+            </LuxuryButton>
+
+            <div className="flex items-center justify-between text-xs pt-2 text-slate-400">
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={loading}
+                className="text-[#D4AF37] hover:underline flex items-center gap-1 font-bold"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{isArabic ? 'إعادة إرسال الرمز' : 'Resend Code'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMode('SIGNUP')}
+                className="hover:text-white underline"
+              >
+                {isArabic ? 'تغيير البريد الإلكتروني' : 'Change Email'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* LOGIN & SIGNUP FORMS */
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            
+            {mode === 'SIGNUP' && (
+              <div className="space-y-1">
+                <label className="font-bold text-slate-300">{isArabic ? 'الاسم بالكامل' : 'Full Name'}</label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    required
+                    placeholder={isArabic ? 'أدخل اسمك بالكامل' : 'Enter your full name'}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="font-bold text-slate-300">{isArabic ? 'البريد الإلكتروني (Gmail)' : 'Email Address'}</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="email"
+                  required
+                  placeholder="example@gmail.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
                 />
               </div>
             </div>
-          )}
 
-          <div className="space-y-1">
-            <label className="font-bold text-slate-300">{isArabic ? 'البريد الإلكتروني' : 'Email Address'}</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              <input
-                type="email"
-                required
-                placeholder="example@domain.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
-              />
-            </div>
-          </div>
+            {mode === 'SIGNUP' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">{isArabic ? 'رقم الهاتف / الواتساب' : 'Phone / WhatsApp'}</label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type="tel"
+                      placeholder="+20 100 000 0000"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
+                    />
+                  </div>
+                </div>
 
-          {mode === 'SIGNUP' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-300">{isArabic ? 'رقم الهاتف / الواتساب' : 'Phone / WhatsApp'}</label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="tel"
-                    placeholder="+20 100 000 0000"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
-                  />
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">{isArabic ? 'الدولة / الجنسية' : 'Country / Residence'}</label>
+                  <div className="relative">
+                    <Globe className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                    <select
+                      value={formData.country}
+                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[#0B0F17] border border-white/15 text-white font-semibold focus:outline-none focus:border-[#D4AF37]"
+                    >
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.nameEn}>
+                          {isArabic ? c.nameAr : c.nameEn}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-300">{isArabic ? 'الدولة / الجنسية' : 'Country / Residence'}</label>
-                <div className="relative">
-                  <Globe className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                  <select
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[#0B0F17] border border-white/15 text-white font-semibold focus:outline-none focus:border-[#D4AF37]"
-                  >
-                    {COUNTRIES.map((c) => (
-                      <option key={c.code} value={c.nameEn}>
-                        {isArabic ? c.nameAr : c.nameEn}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div className="space-y-1">
+              <label className="font-bold text-slate-300">{isArabic ? 'كلمة السر' : 'Password'}</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
+                />
               </div>
             </div>
-          )}
 
-          <div className="space-y-1">
-            <label className="font-bold text-slate-300">{isArabic ? 'كلمة السر' : 'Password'}</label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37]"
-              />
-            </div>
-          </div>
-
-          <LuxuryButton
-            type="submit"
-            disabled={loading}
-            variant="gold"
-            size="lg"
-            className="w-full font-bold uppercase tracking-wider flex items-center justify-center gap-2 mt-2"
-          >
-            <span>
-              {loading
-                ? (isArabic ? 'جاري الاتصال...' : 'Connecting...')
-                : mode === 'LOGIN'
-                ? (isArabic ? 'تسجيل الدخول الحساب' : 'Sign In Now')
-                : (isArabic ? 'إنشاء حساب جديد فوراً' : 'Create Account Now')}
-            </span>
-            <ArrowLeft className={`w-4 h-4 ${isArabic ? '' : 'rotate-180'}`} />
-          </LuxuryButton>
-        </form>
+            <LuxuryButton
+              type="submit"
+              disabled={loading}
+              variant="gold"
+              size="lg"
+              className="w-full font-bold uppercase tracking-wider flex items-center justify-center gap-2 mt-2"
+            >
+              <span>
+                {loading
+                  ? (isArabic ? 'جاري الإرسال والتحقق...' : 'Processing...')
+                  : mode === 'LOGIN'
+                  ? (isArabic ? 'تسجيل الدخول الحساب' : 'Sign In Now')
+                  : (isArabic ? 'إرسال رمز التحقيق للبريد ✉️' : 'Send Verification OTP ✉️')}
+              </span>
+              <ArrowLeft className={`w-4 h-4 ${isArabic ? '' : 'rotate-180'}`} />
+            </LuxuryButton>
+          </form>
+        )}
 
       </div>
     </div>
