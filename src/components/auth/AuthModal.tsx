@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useStore'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
-import { X, Lock, Mail, User, Phone, Globe, ArrowLeft, CheckCircle, ShieldCheck, KeyRound, RotateCcw } from 'lucide-react'
+import { X, Lock, Mail, User, Phone, Globe, ArrowLeft, CheckCircle, ShieldCheck, ExternalLink, RotateCcw } from 'lucide-react'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -31,7 +31,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const { language, setCurrentUser } = useAppStore()
   const isArabic = language === 'ar'
 
-  const [mode, setMode] = useState<'LOGIN' | 'SIGNUP' | 'OTP_VERIFY'>('LOGIN')
+  const [mode, setMode] = useState<'LOGIN' | 'SIGNUP' | 'CONFIRM_EMAIL_SENT'>('LOGIN')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,7 +40,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     country: 'Egypt'
   })
 
-  const [otpCode, setOtpCode] = useState('')
+  const [confirmUrl, setConfirmUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
@@ -77,24 +77,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         router.refresh()
 
       } else if (mode === 'SIGNUP') {
-        // Step 1: Send OTP to Gmail
+        // Step 1: Send 1-Click Confirmation Link to Gmail
         const res = await fetch('/api/auth/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: formData.email,
             name: formData.name,
-            password: formData.password
+            password: formData.password,
+            phone: formData.phone,
+            country: formData.country
           })
         })
 
         const data = await res.json()
         if (!res.ok || !data.success) {
-          throw new Error(data.error || (isArabic ? 'فشل إرسال رمز التحقيق' : 'Failed to send OTP code'))
+          throw new Error(data.error || (isArabic ? 'فشل إرسال رابط التفعيل' : 'Failed to send confirmation link'))
         }
 
-        setSuccessMsg(data.message || (isArabic ? 'تم إرسال رمز التحقيق إلى بريدك الإلكتروني' : 'OTP code sent to your email.'))
-        setMode('OTP_VERIFY')
+        if (data.confirmUrl) {
+          setConfirmUrl(data.confirmUrl)
+        }
+
+        setSuccessMsg(data.message || (isArabic ? 'تم إرسال رابط التفعيل إلى بريدك الإلكتروني' : 'Confirmation link sent to your email.'))
+        setMode('CONFIRM_EMAIL_SENT')
       }
     } catch (err: any) {
       setErrorMsg(err.message || (isArabic ? 'حدث خطأ أثناء الاتصال.' : 'An error occurred.'))
@@ -103,54 +109,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     }
   }
 
-  const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!otpCode || otpCode.length < 6) {
-      setErrorMsg(isArabic ? 'يرجى إدخال رمز التحقيق المكون من 6 أرقام.' : 'Please enter the 6-digit OTP code.')
-      return
-    }
-
-    setLoading(true)
-    setErrorMsg('')
-    setSuccessMsg('')
-
-    try {
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          otpCode: otpCode.trim()
-        })
-      })
-
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || (isArabic ? 'رمز التحقيق غير صحيح.' : 'Invalid OTP code.'))
-      }
-
-      if (data.user) {
-        setCurrentUser(data.user)
-      }
-
-      setSuccessMsg(isArabic ? 'تم تفعيل حسابك بنجاح! جاري التوجيه...' : 'Account verified successfully!')
-      window.dispatchEvent(new Event('auth-state-change'))
-
-      setTimeout(() => {
-        onClose()
-        if (onSuccess) onSuccess()
-        router.push('/customer')
-        router.refresh()
-      }, 1000)
-
-    } catch (err: any) {
-      setErrorMsg(err.message || (isArabic ? 'رمز التحقيق غير صحيح.' : 'Invalid OTP code.'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleResendOtp = async () => {
+  const handleResendLink = async () => {
     setLoading(true)
     setErrorMsg('')
     setSuccessMsg('')
@@ -158,12 +117,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, name: formData.name })
+        body: JSON.stringify({
+          email: formData.email,
+          name: formData.name,
+          password: formData.password,
+          phone: formData.phone,
+          country: formData.country
+        })
       })
       const data = await res.json()
-      setSuccessMsg(isArabic ? 'تم إرسال رمز جديد إلى بريدك الإلكتروني!' : 'New OTP sent to your email!')
+      if (data.confirmUrl) setConfirmUrl(data.confirmUrl)
+      setSuccessMsg(isArabic ? 'تم إعادة إرسال رابط التفعيل بنجاح!' : 'New confirmation link sent!')
     } catch (err: any) {
-      setErrorMsg(err.message || 'فشل إرسال الرمز')
+      setErrorMsg(err.message || 'فشل إعادة إرسال الرابط')
     } finally {
       setLoading(false)
     }
@@ -196,17 +162,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               ? (isArabic ? 'تسجيل الدخول للحساب' : 'Sign In to Your Account')
               : mode === 'SIGNUP'
               ? (isArabic ? 'إنشاء حساب مسافر جديد' : 'Create New Traveler Account')
-              : (isArabic ? 'تأكيد الحساب برمز الـ OTP ✉️' : 'Gmail OTP Verification')}
+              : (isArabic ? 'تأكيد الحساب برابط التفعيل ✉️' : '1-Click Email Confirmation')}
           </h2>
           <p className="text-xs text-slate-400">
-            {mode === 'OTP_VERIFY'
-              ? (isArabic ? `أدخل رمز التحقيق المكون من 6 أرقام المرسل إلى: ${formData.email}` : `Enter 6-digit OTP sent to: ${formData.email}`)
+            {mode === 'CONFIRM_EMAIL_SENT'
+              ? (isArabic ? `تم إرسال رابط التفعيل المباشر إلى: ${formData.email}` : `Confirmation link sent to: ${formData.email}`)
               : (isArabic ? 'استمتع بإدارة حجوزاتك، العروض الحصرية، والتأكيد الفوري' : 'Access your bookings, VIP perks, and instant vouchers')}
           </p>
         </div>
 
         {/* Mode Selector Tabs (only for Login/Signup) */}
-        {mode !== 'OTP_VERIFY' && (
+        {mode !== 'CONFIRM_EMAIL_SENT' && (
           <div className="grid grid-cols-2 p-1 rounded-2xl bg-white/5 border border-white/10 text-xs font-bold">
             <button
               type="button"
@@ -230,7 +196,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         )}
 
         {/* Single Click Google Sign-in */}
-        {mode !== 'OTP_VERIFY' && (
+        {mode !== 'CONFIRM_EMAIL_SENT' && (
           <>
             <button
               type="button"
@@ -268,47 +234,51 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
         )}
 
-        {/* OTP VERIFICATION STEP */}
-        {mode === 'OTP_VERIFY' ? (
-          <form onSubmit={handleVerifyOtpSubmit} className="space-y-5 text-xs">
-
-            <div className="space-y-2 text-center">
-              <label className="font-bold text-slate-200 text-xs block">
-                {isArabic ? 'أدخل رمز التحقيق الـ 6 أرقام:' : 'Enter 6-Digit OTP Code:'}
-              </label>
-              <div className="relative max-w-xs mx-auto">
-                <KeyRound className="w-5 h-5 text-[#D4AF37] absolute left-3.5 top-3.5" />
-                <input
-                  type="text"
-                  maxLength={6}
-                  required
-                  placeholder="123456"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  className="w-full text-center tracking-[8px] font-mono text-xl font-black py-3 rounded-2xl bg-white/5 border border-[#D4AF37]/40 text-white focus:outline-none focus:border-[#D4AF37]"
-                />
+        {/* 1-CLICK EMAIL CONFIRMATION SENT STEP */}
+        {mode === 'CONFIRM_EMAIL_SENT' ? (
+          <div className="space-y-6 text-center text-xs">
+            <div className="p-5 rounded-3xl bg-white/5 border border-[#D4AF37]/40 space-y-3">
+              <div className="w-12 h-12 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center mx-auto text-[#D4AF37]">
+                <Mail className="w-6 h-6" />
               </div>
+              <h3 className="text-base font-black text-white">
+                {isArabic ? 'افتح بريدك الإلكتروني الآن ✉️' : 'Check Your Email Inbox'}
+              </h3>
+              <p className="text-slate-300 text-xs leading-relaxed">
+                {isArabic
+                  ? `أرسلنا رسالة تحتوي على زر (تأكيد الحساب) إلى الجيميل الخاص بك:`
+                  : `We sent an email with a (Confirm Account) button to:`}
+              </p>
+              <div className="font-mono text-sm font-black text-[#E5C158] bg-black/60 py-2 px-3 rounded-xl border border-white/10 break-all">
+                {formData.email}
+              </div>
+              <p className="text-[11px] text-slate-400">
+                {isArabic
+                  ? 'اضغط على زر (تأكيد وتفعيل الحساب 👑) داخل الرسالة وسيتم تفعيل حسابك فوراً.'
+                  : 'Click the button inside the email to instantly activate your account.'}
+              </p>
             </div>
 
-            <LuxuryButton
-              type="submit"
-              disabled={loading}
-              variant="gold"
-              size="lg"
-              className="w-full font-bold uppercase tracking-wider flex items-center justify-center gap-2"
-            >
-              <span>{loading ? (isArabic ? 'جاري التحقق...' : 'Verifying...') : (isArabic ? 'تأكيد وتفعيل الحساب 👑' : 'Verify & Activate Account')}</span>
-            </LuxuryButton>
+            {/* Direct Confirmation Action Link */}
+            {confirmUrl && (
+              <a
+                href={confirmUrl}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#D4AF37] to-[#E5C158] text-[#0B0F17] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/20 hover:scale-[1.02] transition-all"
+              >
+                <span>{isArabic ? 'تأكيد وتفعيل الحساب مباشرة الآن 👑' : 'Confirm & Activate Account Now 👑'}</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
 
             <div className="flex items-center justify-between text-xs pt-2 text-slate-400">
               <button
                 type="button"
-                onClick={handleResendOtp}
+                onClick={handleResendLink}
                 disabled={loading}
                 className="text-[#D4AF37] hover:underline flex items-center gap-1 font-bold"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>{isArabic ? 'إعادة إرسال الرمز' : 'Resend Code'}</span>
+                <span>{isArabic ? 'إعادة إرسال الرابط' : 'Resend Link'}</span>
               </button>
 
               <button
@@ -319,7 +289,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 {isArabic ? 'تغيير البريد الإلكتروني' : 'Change Email'}
               </button>
             </div>
-          </form>
+          </div>
         ) : (
           /* LOGIN & SIGNUP FORMS */
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
@@ -416,10 +386,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             >
               <span>
                 {loading
-                  ? (isArabic ? 'جاري الإرسال والتحقق...' : 'Processing...')
+                  ? (isArabic ? 'جاري الإرسال...' : 'Sending link...')
                   : mode === 'LOGIN'
                   ? (isArabic ? 'تسجيل الدخول الحساب' : 'Sign In Now')
-                  : (isArabic ? 'إرسال رمز التحقيق للبريد ✉️' : 'Send Verification OTP ✉️')}
+                  : (isArabic ? 'إرسال رابط التفعيل للجيميل ✉️' : 'Send Activation Link to Gmail ✉️')}
               </span>
               <ArrowLeft className={`w-4 h-4 ${isArabic ? '' : 'rotate-180'}`} />
             </LuxuryButton>

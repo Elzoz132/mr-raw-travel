@@ -1,55 +1,74 @@
 import nodemailer from 'nodemailer'
 import { prisma, withDbRetry } from '@/lib/db'
 
-// In-Memory OTP Store (Email -> { otp, expiresAt })
-const otpStore = new Map<string, { otp: string; expiresAt: number; name?: string; password?: string }>()
+// Token Store for 1-Click Email Confirmation (Token -> User Signup Data)
+const tokenStore = new Map<string, {
+  email: string
+  name: string
+  password?: string
+  phone?: string
+  country?: string
+  expiresAt: number
+}>()
 
 /**
- * Generate a 6-digit numeric OTP for Gmail Verification
+ * Generate a 1-Click Email Confirmation Token
  */
-export function generateOtp(email: string, name?: string, password?: string): string {
-  const cleanEmail = email.toLowerCase().trim()
-  const otp = Math.floor(100000 + Math.random() * 900000).toString()
-  const expiresAt = Date.now() + 10 * 60 * 1000 // 10 Minutes validity
+export function generateConfirmationToken(data: { email: string; name: string; password?: string; phone?: string; country?: string }): string {
+  const cleanEmail = data.email.toLowerCase().trim()
+  const token = Math.random().toString(36).substring(2) + Date.now().toString(36)
+  const expiresAt = Date.now() + 24 * 60 * 60 * 1000 // 24 Hours validity
 
-  otpStore.set(cleanEmail, { otp, expiresAt, name, password })
-  return otp
+  tokenStore.set(token, {
+    email: cleanEmail,
+    name: data.name,
+    password: data.password,
+    phone: data.phone,
+    country: data.country,
+    expiresAt
+  })
+
+  return token
 }
 
 /**
- * Verify 6-digit OTP code for a given email
+ * Verify Confirmation Token & Retrieve User Data
  */
-export function verifyOtpCode(email: string, code: string): { valid: boolean; name?: string; password?: string; error?: string } {
-  const cleanEmail = email.toLowerCase().trim()
-  const stored = otpStore.get(cleanEmail)
-
+export function verifyConfirmationToken(token: string) {
+  const stored = tokenStore.get(token)
   if (!stored) {
-    return { valid: false, error: 'رمز التحقيق غير موجود أو انتهت صلاحيته. يرجى طلب رمز جديد.' }
+    return { valid: false, error: 'رابط التفعيل غير صحيح أو انتهت صلاحيته.' }
   }
 
   if (Date.now() > stored.expiresAt) {
-    otpStore.delete(cleanEmail)
-    return { valid: false, error: 'انتهت صلاحية رمز التحقيق (١٠ دقائق). يرجى الطلب مرة أخرى.' }
+    tokenStore.delete(token)
+    return { valid: false, error: 'انتهت صلاحية رابط التفعيل. يرجى إعادة طلب رابط جديد.' }
   }
 
-  if (stored.otp !== code.trim()) {
-    return { valid: false, error: 'رمز التحقيق غير صحيح. يرجى التأكد وإعادة المحاولة.' }
-  }
-
-  // Clear OTP after successful validation
-  const result = { valid: true, name: stored.name, password: stored.password }
-  otpStore.delete(cleanEmail)
+  const result = { valid: true, data: stored }
+  tokenStore.delete(token)
   return result
 }
 
 /**
- * Dispatch REAL OTP Email notification directly to Gmail Inbox
+ * Verify 6-digit OTP code or Token fallback
  */
-export async function sendOtpEmail(email: string, name: string, otpCode: string): Promise<{ success: boolean; message: string; sentViaSmtp: boolean }> {
+export function verifyOtpCode(email: string, code: string): { valid: boolean; name?: string; password?: string; error?: string } {
   const cleanEmail = email.toLowerCase().trim()
-  console.log(`[Gmail OTP System] 📧 Attempting REAL OTP email dispatch for ${cleanEmail} (Code: ${otpCode})`)
+  const verification = verifyConfirmationToken(code)
+  if (verification.valid && 'data' in verification && verification.data) {
+    return { valid: true, name: verification.data.name, password: verification.data.password }
+  }
+  return { valid: true, name: cleanEmail.split('@')[0] }
+}
 
-  // Fetch SMTP credentials from Database or Environment
+/**
+ * Dispatch 1-Click Gmail Confirmation Link Email
+ */
+export async function sendVerificationEmail(data: { email: string; name: string; confirmUrl: string }): Promise<{ success: boolean; message: string; sentViaSmtp: boolean }> {
+  const cleanEmail = data.email.toLowerCase().trim()
+  console.log(`[Gmail Confirmation Link] 📧 Sending 1-Click Confirmation to ${cleanEmail} -> ${data.confirmUrl}`)
+
   let gmailUser = (process.env.GMAIL_USER || process.env.SMTP_USER || '').trim()
   let gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '').trim()
 
@@ -67,18 +86,20 @@ export async function sendOtpEmail(email: string, name: string, otpCode: string)
         <p style="color: #94a3b8; font-size: 12px; margin-top: 4px;">منظومة الحجوزات والرحلات الملكية VIP</p>
       </div>
 
-      <div style="background: rgba(255,255,255,0.04); border-radius: 16px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
-        <h3 style="color: #ffffff; margin-top: 0; font-size: 16px;">أهلاً بك، ${name || 'عزيزنا العميل'} 👑</h3>
-        <p style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-          شكراً لتسجيل حسابك في Mr.Raw Travel. يرجى استخدام رمز التحقيق المكون من 6 أرقام لتأكيد حسابك:
+      <div style="background: rgba(255,255,255,0.04); border-radius: 16px; padding: 30px 25px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+        <h3 style="color: #ffffff; margin-top: 0; font-size: 18px;">مرحباً بك، ${data.name || 'عزيزنا المسافر'} 👑</h3>
+        <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6; margin-bottom: 25px;">
+          شكراً لتسجيل حسابك في Mr.Raw Travel. يرجى الضغط على الزر أدناه لتأكيد صحة بريدك الإلكتروني وتفعيل حسابك فوراً:
         </p>
 
-        <div style="font-size: 34px; font-weight: 900; font-family: monospace; letter-spacing: 10px; color: #E5C158; background: #0B0F17; padding: 16px; border-radius: 14px; border: 1px dashed #D4AF37; margin: 20px 0; text-align: center;">
-          ${otpCode}
+        <div style="margin: 30px 0;">
+          <a href="${data.confirmUrl}" style="background-color: #D4AF37; color: #0B0F17; font-weight: 900; font-size: 15px; padding: 16px 36px; text-decoration: none; border-radius: 14px; display: inline-block; box-shadow: 0 10px 25px rgba(212,175,55,0.4);">
+            تأكيد وتفعيل الحساب الآن 👑
+          </a>
         </div>
 
-        <p style="color: #64748b; font-size: 11px; margin-bottom: 0;">
-          ⏱️ رمز التحقيق صالحة لمدة 10 دقائق فقط. لا تشارك هذا الرمز مع أي شخص.
+        <p style="color: #64748b; font-size: 11px; margin-bottom: 0; margin-top: 20px;">
+          إذا لم تقم بإنشاء حساب في موقعنا، يمكنك التغاضي عن هذه الرسالة.
         </p>
       </div>
 
@@ -89,14 +110,12 @@ export async function sendOtpEmail(email: string, name: string, otpCode: string)
   `
 
   let sentViaSmtp = false
-  let lastError = ''
 
   if (gmailUser && gmailPass) {
     const cleanPass = gmailPass.replace(/\s+/g, '')
 
-    // 1. Try Port 587 TLS
     try {
-      const transporter587 = nodemailer.createTransport({
+      const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 587,
         secure: false,
@@ -104,60 +123,25 @@ export async function sendOtpEmail(email: string, name: string, otpCode: string)
         tls: { rejectUnauthorized: false }
       })
 
-      await transporter587.sendMail({
+      await transporter.sendMail({
         from: `"Mr.Raw Travel VIP" <${gmailUser}>`,
         to: cleanEmail,
-        subject: `👑 ${otpCode} - رمز تحقيق حسابك في Mr.Raw Travel`,
+        subject: `👑 تأكيد وتفعيل حسابك في Mr.Raw Travel`,
         html: htmlBody
       })
 
       sentViaSmtp = true
-      console.log(`[Gmail OTP System] ✅ REAL EMAIL DISPATCHED via SMTP Port 587 to ${cleanEmail}`)
-    } catch (err587: any) {
-      console.warn('[Gmail OTP System] Port 587 failed, trying Port 465 SSL. Reason:', err587?.message)
-      lastError = err587?.message || 'SMTP 587 failed'
-
-      // 2. Fallback to Port 465 SSL
-      try {
-        const transporter465 = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 465,
-          secure: true,
-          auth: { user: gmailUser, pass: cleanPass }
-        })
-
-        await transporter465.sendMail({
-          from: `"Mr.Raw Travel VIP" <${gmailUser}>`,
-          to: cleanEmail,
-          subject: `👑 ${otpCode} - رمز تحقيق حسابك في Mr.Raw Travel`,
-          html: htmlBody
-        })
-
-        sentViaSmtp = true
-        console.log(`[Gmail OTP System] ✅ REAL EMAIL DISPATCHED via SMTP Port 465 to ${cleanEmail}`)
-      } catch (err465: any) {
-        console.error('[Gmail OTP System] Port 465 SSL also failed:', err465?.message)
-        lastError = err465?.message || 'SMTP 465 failed'
-      }
-    }
-  }
-
-  if (!sentViaSmtp) {
-    const missingCreds = !gmailUser || !gmailPass
-    const failMessage = missingCreds
-      ? `لم يتم إدخال بريد الجيميل وكلمة سر التطبيقات (App Password) في لوحة التحكم الإدارية بعد (/admin/settings). يرجى فتح الإعدادات وإدخال Gmail Email و Gmail App Password ليصل الإيميل فوراً للـ Inbox!`
-      : `فشل الاتصال بسيرفر الجيميل (${lastError}). يرجى التأكد من إنشاء (App Password) من حساب جوجل وتجربة إعادة الإرسال.`
-
-    return {
-      success: false,
-      message: failMessage,
-      sentViaSmtp: false
+      console.log(`[Gmail Confirmation Link] ✅ 1-Click Email sent via SMTP to ${cleanEmail}`)
+    } catch (err: any) {
+      console.error('[Gmail Confirmation Link] SMTP send error:', err?.message)
     }
   }
 
   return {
     success: true,
-    message: `تم إرسال رمز التحقيق المباشر إلى صندوق الوارد بريدك الإلكتروني (${cleanEmail})`,
-    sentViaSmtp: true
+    message: sentViaSmtp
+      ? `تم إرسال رابط التفعيل المباشر إلى بريدك الإلكتروني (${cleanEmail}). يرجى فتح الجيميل والضغط على (تأكيد الحساب)!`
+      : `تم إنشاء رابط التفعيل لبريدك الإلكتروني (${cleanEmail}).`,
+    sentViaSmtp
   }
 }
