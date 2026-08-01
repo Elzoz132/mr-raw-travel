@@ -13,9 +13,10 @@ export const AdminHeader: React.FC = () => {
   const isArabic = language === 'ar'
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/')
-    router.refresh()
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {}
+    window.location.href = '/'
   }
 
   const navItems = [

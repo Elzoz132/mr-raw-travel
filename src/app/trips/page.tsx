@@ -3,7 +3,7 @@ import { PopularTrips } from '@/components/home/PopularTrips'
 import { CustomPackageBuilder } from '@/components/trip/CustomPackageBuilder'
 import { JsonLd } from '@/components/seo/JsonLd'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 interface TripsPageProps {
   searchParams: Promise<{ category?: string }>
@@ -15,14 +15,14 @@ export default async function TripsCatalogPage({ searchParams }: TripsPageProps)
   let trips: any[] = []
 
   try {
-    const whereCondition: any = { isPublished: true }
+    const whereCondition: any = {}
     if (category && category !== 'all') {
       whereCondition.category = { slug: category }
     }
 
     trips = await prisma.trip.findMany({
       where: whereCondition,
-      orderBy: { rating: 'desc' },
+      orderBy: { createdAt: 'desc' },
       include: { category: true }
     })
   } catch (err) {

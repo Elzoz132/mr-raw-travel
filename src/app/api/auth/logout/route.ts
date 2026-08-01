@@ -2,15 +2,22 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST() {
   try {
     const cookieStore = await cookies()
-    cookieStore.delete(ADMIN_COOKIE_NAME)
-    cookieStore.delete('user_session')
-    cookieStore.delete('user_role')
+    try { cookieStore.delete(ADMIN_COOKIE_NAME) } catch {}
+    try { cookieStore.delete('user_session') } catch {}
+    try { cookieStore.delete('user_role') } catch {}
 
-    return NextResponse.json({ success: true })
+    const response = NextResponse.json({ success: true })
+    response.cookies.set(ADMIN_COOKIE_NAME, '', { path: '/', maxAge: 0 })
+    response.cookies.set('user_session', '', { path: '/', maxAge: 0 })
+    response.cookies.set('user_role', '', { path: '/', maxAge: 0 })
+
+    return response
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+    return NextResponse.json({ success: true })
   }
 }

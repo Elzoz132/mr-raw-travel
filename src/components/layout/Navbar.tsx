@@ -80,10 +80,11 @@ export const Navbar: React.FC = () => {
   }, [])
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {}
     setCurrentUser(null)
-    router.push('/')
-    router.refresh()
+    window.location.href = '/'
   }
 
   if (pathname.startsWith('/admin')) {
