@@ -76,6 +76,7 @@ export const HeroSection: React.FC = () => {
           loop={cmsConfig.videoLoop}
           muted={cmsConfig.videoMute}
           playsInline
+          preload="metadata"
           poster={cmsConfig.videoPoster || cmsConfig.imageUrl}
           className="absolute inset-0 w-full h-full object-cover -z-20 opacity-40 scale-105"
         >

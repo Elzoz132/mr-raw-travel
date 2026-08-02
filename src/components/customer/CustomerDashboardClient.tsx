@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useAppStore } from '@/store/useStore'
 import { PrintableVoucherModal } from '@/components/common/PrintableVoucherModal'
 import { CustomerProfileSettings } from '@/components/customer/CustomerProfileSettings'
@@ -232,10 +233,10 @@ export const CustomerDashboardClient: React.FC = () => {
 
               <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
                 <span>أو تصفح الرحلات المتاحة:</span>
-                <a href="/trips" className="text-[#D4AF37] font-bold underline flex items-center gap-1">
+                <Link href="/trips" className="text-[#D4AF37] font-bold underline flex items-center gap-1">
                   <span>تصفح كافة الرحلات</span>
                   <ArrowRight className="w-4 h-4 rotate-180" />
-                </a>
+                </Link>
               </div>
             </div>
           ) : (
@@ -317,10 +318,10 @@ export const CustomerDashboardClient: React.FC = () => {
           {wishlist.length === 0 ? (
             <div className="glass-panel rounded-3xl p-8 text-center space-y-4 border border-white/10">
               <p className="text-xs text-slate-400">لم تقم بحفظ أي رحلات في المفضلة بعد. اضغط على رمز القلب (❤️) على أي رحلة لحفظها هنا.</p>
-              <a href="/trips" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl gold-gradient-btn text-xs font-black text-[#0B0F17]">
+              <Link href="/trips" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl gold-gradient-btn text-xs font-black text-[#0B0F17]">
                 <span>تصفح كل الرحلات</span>
                 <ArrowRight className="w-4 h-4 rotate-180" />
-              </a>
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

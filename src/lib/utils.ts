@@ -12,14 +12,41 @@ export function formatPrice(amount: number, currency: Currency = 'USD', lang: st
   return formatPriceWithLang(amount, currency, lang)
 }
 
-export function formatDate(dateInput: Date | string, locale: string = 'en'): string {
-  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput
-  return date.toLocaleDateString(locale === 'ar' ? 'ar-EG' : locale === 'de' ? 'de-DE' : 'en-US', {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+/**
+ * Safari & iOS Compatible Safe Date Formatter
+ */
+export function formatDate(dateInput: Date | string | null | undefined, locale: string = 'en'): string {
+  if (!dateInput) return ''
+  let date: Date
+
+  if (typeof dateInput === 'string') {
+    const cleanStr = dateInput.trim()
+    // Safari Fix: Convert "YYYY-MM-DD HH:MM:SS" to ISO "YYYY-MM-DDTHH:MM:SS"
+    const isoStr = cleanStr.includes(' ') && !cleanStr.includes('T') ? cleanStr.replace(' ', 'T') : cleanStr
+    date = new Date(isoStr)
+
+    // Fallback for older WebKit / Safari engines
+    if (isNaN(date.getTime())) {
+      date = new Date(cleanStr.replace(/-/g, '/'))
+    }
+  } else {
+    date = dateInput
+  }
+
+  if (isNaN(date.getTime())) {
+    return String(dateInput)
+  }
+
+  try {
+    return date.toLocaleDateString(locale === 'ar' ? 'ar-EG' : locale === 'de' ? 'de-DE' : 'en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  } catch (e) {
+    return date.toISOString().split('T')[0]
+  }
 }
 
 export function generateBookingNumber(): string {

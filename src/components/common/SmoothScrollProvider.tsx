@@ -7,17 +7,21 @@ export const SmoothScrollProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const lenisRef = useRef<Lenis | null>(null)
 
   useEffect(() => {
-    // Respect prefers-reduced-motion
+    // Respect prefers-reduced-motion or mobile touch engines for Safari iOS
+    if (typeof window === 'undefined') return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return
     }
+
+    // Check if device is touch-primary (iOS / iPadOS / Android)
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
 
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
-      smoothWheel: true,
+      smoothWheel: !isTouchDevice,
       wheelMultiplier: 1.0,
       touchMultiplier: 1.5,
     })

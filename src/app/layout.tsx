@@ -53,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${ibmArabic.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${ibmArabic.variable}`}>
       <body className="bg-[#0B0F17] text-white min-h-screen flex flex-col antialiased relative">
         <SmoothScrollProvider>
           <LuxurySplashLoader />

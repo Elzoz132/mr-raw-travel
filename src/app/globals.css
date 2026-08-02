@@ -13,26 +13,43 @@
   }
 }
 
-body {
+/* Safari & iOS WebKit General Overrides & Resets */
+html, body {
   background-color: #0b0f17;
   color: #f8fafc;
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
-  selection-background-color: #d4af37;
-  selection-color: #0b0f17;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: rgba(212, 175, 55, 0.2);
 }
 
 [dir="rtl"] body {
   font-family: var(--font-arabic), system-ui, -apple-system, sans-serif;
 }
 
-/* Glassmorphism primitives */
+/* Safari iOS Form Elements Reset */
+input, select, textarea, button {
+  -webkit-appearance: none;
+  font-family: inherit;
+}
+
+/* WebKit Momentum Smooth Touch Scroll */
+.overflow-y-auto, .overflow-x-auto, .overflow-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Glassmorphism primitives with WebKit Backdrops & Fallbacks */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  -webkit-transform: translateZ(0);
 }
 
 .glass-card {
@@ -41,18 +58,29 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(212, 175, 55, 0.15);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-transform: translateZ(0);
 }
 
 .glass-card:hover {
   border-color: rgba(212, 175, 55, 0.45);
   box-shadow: 0 15px 35px rgba(212, 175, 55, 0.15), 0 5px 15px rgba(0, 0, 0, 0.6);
   transform: translateY(-4px);
+  -webkit-transform: translateY(-4px) translateZ(0);
+}
+
+/* Backdrop Filter Fallback for Older WebKit / Safari Low Power Mode */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass-panel, .glass-card {
+    background: rgba(15, 23, 42, 0.95) !important;
+  }
 }
 
 .gold-gradient-text {
   background: linear-gradient(135deg, #FFF099 0%, #D4AF37 50%, #AA7C11 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .gold-gradient-btn {
@@ -61,12 +89,14 @@ body {
   font-weight: 700;
   box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
   transition: all 0.3s ease;
+  -webkit-transform: translateZ(0);
 }
 
 .gold-gradient-btn:hover {
   background: linear-gradient(135deg, #FFF099 0%, #E5C158 50%, #D4AF37 100%);
   box-shadow: 0 6px 25px rgba(212, 175, 55, 0.5);
   transform: scale(1.02);
+  -webkit-transform: scale(1.02) translateZ(0);
 }
 
 /* Custom Scrollbar */

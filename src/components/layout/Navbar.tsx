@@ -27,6 +27,13 @@ export const Navbar: React.FC = () => {
   const t = dictionaries[language].nav
   const isArabic = language === 'ar'
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.dir = isArabic ? 'rtl' : 'ltr'
+      document.documentElement.lang = language
+    }
+  }, [language, isArabic])
+
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)

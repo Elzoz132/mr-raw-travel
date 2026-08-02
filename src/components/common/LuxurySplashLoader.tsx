@@ -5,16 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Crown, Sparkles } from 'lucide-react'
 
 export const LuxurySplashLoader: React.FC = () => {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !sessionStorage.getItem('mr_raw_splash_loaded')
+    }
+    return true
+  })
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    // Only show once per session
-    const hasLoaded = sessionStorage.getItem('mr_raw_splash_loaded')
-    if (hasLoaded) {
-      setLoading(false)
-      return
-    }
+    if (!loading) return
 
     const interval = setInterval(() => {
       setProgress((prev) => {

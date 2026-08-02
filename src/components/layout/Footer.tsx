@@ -15,10 +15,6 @@ export const Footer: React.FC = () => {
   const isGerman = language === 'de'
   const [footerCms, setFooterCms] = useState<FooterConfig>(defaultFooterConfig)
 
-  if (pathname.startsWith('/admin')) {
-    return null
-  }
-
   useEffect(() => {
     fetch('/api/admin/cms/footer')
       .then((res) => res.json())
@@ -29,6 +25,10 @@ export const Footer: React.FC = () => {
       })
       .catch((err) => console.error('Failed to load footer CMS:', err))
   }, [])
+
+  if (pathname.startsWith('/admin')) {
+    return null
+  }
 
   const companyDesc = isArabic
     ? footerCms.descriptionAr
