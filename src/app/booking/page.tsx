@@ -58,6 +58,47 @@ export default function BookingPage() {
     }
   }, [currentUser])
 
+  // Payment gateways dynamic settings
+  const [activeGateways, setActiveGateways] = useState<Record<string, any>>({
+    VODAFONE_CASH: {
+      instructionsAr: 'تحويل إلى رقم فودافون كاش: 01022392428',
+      details: { phoneNumber: '01022392428', accountName: 'Mr.Raw Travel' }
+    },
+    INSTAPAY: {
+      instructionsAr: 'تحويل مباشر عبر إنستا باي إلى IPA: mrraw@instapay',
+      details: { accountName: 'Mr.Raw Travel', username: 'mrraw@instapay', phoneNumber: '01022392428' }
+    },
+    BANK_TRANSFER: {
+      instructionsAr: 'تحويل بنكي مباشر لحساب الشركة البنكي',
+      details: {
+        bankName: 'البنك الأهلي المصري (National Bank of Egypt)',
+        accountHolder: 'Mr.Raw Luxury Travel',
+        accountNumber: '1234567890123456',
+        iban: 'EG380002000100001234567890123',
+        swiftCode: 'NBEGEGCX'
+      }
+    }
+  })
+
+  React.useEffect(() => {
+    fetch('/api/admin/gateways')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.gateways) {
+          const map: Record<string, any> = {}
+          data.gateways.forEach((gt: any) => {
+            let parsed: any = {}
+            try {
+              if (gt.details) parsed = typeof gt.details === 'string' ? JSON.parse(gt.details) : gt.details
+            } catch (e) {}
+            map[gt.key] = { ...gt, details: parsed }
+          })
+          setActiveGateways(map)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Coupon state
   const [couponCode, setCouponCode] = useState('')
   const [discountAmount, setDiscountAmount] = useState(0)
@@ -523,8 +564,62 @@ export default function BookingPage() {
                 ))}
               </div>
 
-              {/* Receipt Upload */}
-              {(formData.paymentMethod === 'INSTAPAY' || formData.paymentMethod === 'VODAFONE_CASH') && (
+              {/* Dynamic Payment Method Details & Receipt Upload */}
+              {formData.paymentMethod === 'VODAFONE_CASH' && (
+                <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/30 space-y-3 text-xs">
+                  <h4 className="font-extrabold text-rose-400 text-sm flex items-center gap-2">
+                    📱 بيانات تحويل فودافون كاش (Vodafone Cash Details)
+                  </h4>
+                  <div className="bg-black/60 p-3 rounded-xl border border-white/10 font-mono text-sm space-y-1">
+                    <div><span className="text-slate-400 text-xs font-sans">رقم المحفظة:</span> <strong className="text-white text-base font-bold">{activeGateways['VODAFONE_CASH']?.details?.phoneNumber || '01022392428'}</strong></div>
+                    {activeGateways['VODAFONE_CASH']?.details?.accountName && (
+                      <div><span className="text-slate-400 text-xs font-sans">اسم الحساب:</span> <strong className="text-white">{activeGateways['VODAFONE_CASH']?.details?.accountName}</strong></div>
+                    )}
+                  </div>
+                  <p className="text-[#D4AF37] font-bold">
+                    {activeGateways['VODAFONE_CASH']?.instructionsAr || 'حول مبلغ العربون وأرفق صورة الإيصال لتأكيد الحجز فوراً.'}
+                  </p>
+                </div>
+              )}
+
+              {formData.paymentMethod === 'INSTAPAY' && (
+                <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/30 space-y-3 text-xs">
+                  <h4 className="font-extrabold text-purple-400 text-sm flex items-center gap-2">
+                    ⚡ بيانات تحويل إنستا باي (InstaPay Transfer Details)
+                  </h4>
+                  <div className="bg-black/60 p-3.5 rounded-xl border border-white/10 space-y-1.5 font-mono">
+                    <div><span className="text-slate-400 text-xs font-sans">اسم الحساب (Account Name):</span> <strong className="text-white font-bold">{activeGateways['INSTAPAY']?.details?.accountName || 'Mr.Raw Luxury Travel'}</strong></div>
+                    <div><span className="text-slate-400 text-xs font-sans">معرف IPA Address:</span> <strong className="text-[#E5C158] font-bold">{activeGateways['INSTAPAY']?.details?.username || 'mrraw@instapay'}</strong></div>
+                    <div><span className="text-slate-400 text-xs font-sans">رقم التليفون (Phone Number):</span> <strong className="text-white font-bold">{activeGateways['INSTAPAY']?.details?.phoneNumber || '01022392428'}</strong></div>
+                  </div>
+                  <p className="text-[#D4AF37] font-bold">
+                    {activeGateways['INSTAPAY']?.instructionsAr || 'تحويل مباشر عبر تطبيق InstaPay باستخدام اسم الحساب أو المعرف ثم أرفق الإيصال.'}
+                  </p>
+                </div>
+              )}
+
+              {formData.paymentMethod === 'BANK_TRANSFER' && (
+                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3 text-xs">
+                  <h4 className="font-extrabold text-emerald-400 text-sm flex items-center gap-2">
+                    🏛️ بيانات الحساب البنكي (Bank Transfer Details)
+                  </h4>
+                  <div className="bg-black/60 p-3.5 rounded-xl border border-white/10 space-y-1.5 font-mono">
+                    <div><span className="text-slate-400 text-xs font-sans">اسم البنك (Bank Name):</span> <strong className="text-white font-bold">{activeGateways['BANK_TRANSFER']?.details?.bankName || 'البنك الأهلي المصري (National Bank of Egypt)'}</strong></div>
+                    <div><span className="text-slate-400 text-xs font-sans">اسم صاحب الحساب:</span> <strong className="text-white font-bold">{activeGateways['BANK_TRANSFER']?.details?.accountHolder || 'Mr.Raw Luxury Travel'}</strong></div>
+                    <div><span className="text-slate-400 text-xs font-sans">رقم الحساب البنكي:</span> <strong className="text-white font-bold">{activeGateways['BANK_TRANSFER']?.details?.accountNumber || '1234567890123456'}</strong></div>
+                    <div><span className="text-slate-400 text-xs font-sans">رقم الـ IBAN الدولي:</span> <strong className="text-[#E5C158] font-bold">{activeGateways['BANK_TRANSFER']?.details?.iban || 'EG380002000100001234567890123'}</strong></div>
+                    {activeGateways['BANK_TRANSFER']?.details?.swiftCode && (
+                      <div><span className="text-slate-400 text-xs font-sans">سويفت كود SWIFT:</span> <strong className="text-white font-bold">{activeGateways['BANK_TRANSFER']?.details?.swiftCode}</strong></div>
+                    )}
+                  </div>
+                  <p className="text-[#D4AF37] font-bold">
+                    {activeGateways['BANK_TRANSFER']?.instructionsAr || 'يرجى كتابة رقم الحجز في ملاحظات التحويل البنكي وإرفاق إيصال التحويل.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Receipt Upload Box */}
+              {(formData.paymentMethod === 'INSTAPAY' || formData.paymentMethod === 'VODAFONE_CASH' || formData.paymentMethod === 'BANK_TRANSFER') && (
                 <div className="p-6 rounded-2xl bg-white/5 border border-[#D4AF37]/30 space-y-4 text-xs">
                   <span className="font-bold text-[#D4AF37] uppercase tracking-wider block">
                     {isArabic ? 'إرفاق صوره إيصال التحويل (اختياري)' : 'Upload Payment Screenshot (Receipt)'}
