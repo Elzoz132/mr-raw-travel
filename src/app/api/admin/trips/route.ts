@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
     const trips = await prisma.trip.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { category: true, images: true }
+      include: { category: true, images: true, packages: true }
     })
     return NextResponse.json({ success: true, trips })
   } catch (err: any) {
@@ -101,6 +104,10 @@ export async function POST(req: Request) {
       data: tripData
     })
 
+    revalidatePath('/', 'layout')
+    revalidatePath('/trips', 'layout')
+    revalidatePath('/admin/trips', 'layout')
+
     return NextResponse.json({ success: true, trip: newTrip })
   } catch (err: any) {
     console.error('Error creating trip:', err)
@@ -139,6 +146,10 @@ export async function PUT(req: Request) {
       data: updateData
     })
 
+    revalidatePath('/', 'layout')
+    revalidatePath('/trips', 'layout')
+    revalidatePath('/admin/trips', 'layout')
+
     return NextResponse.json({ success: true, trip: updatedTrip })
   } catch (err: any) {
     console.error('Error updating trip:', err)
@@ -155,9 +166,23 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, error: 'ID is required.' }, { status: 400 })
     }
 
+    // Delete related child records first to satisfy foreign key constraints
+    await prisma.tripPackage.deleteMany({ where: { tripId: id } })
+    await prisma.tripImage.deleteMany({ where: { tripId: id } })
+    await prisma.tripSchedule.deleteMany({ where: { tripId: id } })
+    await prisma.review.deleteMany({ where: { tripId: id } })
+    await prisma.booking.deleteMany({ where: { tripId: id } })
+
+    // Now delete the trip itself
     await prisma.trip.delete({ where: { id } })
+
+    revalidatePath('/', 'layout')
+    revalidatePath('/trips', 'layout')
+    revalidatePath('/admin/trips', 'layout')
+
     return NextResponse.json({ success: true })
   } catch (err: any) {
+    console.error('Error deleting trip:', err)
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
   }
 }
