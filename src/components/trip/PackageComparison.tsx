@@ -351,10 +351,16 @@ export const PackageComparison: React.FC<PackageComparisonProps> = ({
       {selectedPackageId && (() => {
         const selectedPkg = packages.find((p) => p.id === selectedPackageId)
         if (!selectedPkg) return null
-        let stepsArr = []
-        if ((selectedPkg as any).itinerarySteps) {
+        let stepsArr: any[] = []
+        if ((selectedPkg as any)?.itinerarySteps) {
           try {
-            stepsArr = JSON.parse((selectedPkg as any).itinerarySteps)
+            const raw = (selectedPkg as any).itinerarySteps
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+            if (Array.isArray(parsed)) {
+              stepsArr = parsed.filter(Boolean)
+            } else if (parsed && typeof parsed === 'object') {
+              stepsArr = [parsed]
+            }
           } catch {
             stepsArr = []
           }

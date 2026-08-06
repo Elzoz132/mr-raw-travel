@@ -202,9 +202,10 @@ export const AdminPackagesClient: React.FC = () => {
       let photosArr: string[] = []
       if (editingPkg.photos) {
         try {
-          photosArr = JSON.parse(editingPkg.photos)
+          const parsed = typeof editingPkg.photos === 'string' ? JSON.parse(editingPkg.photos) : editingPkg.photos
+          photosArr = Array.isArray(parsed) ? parsed.filter(Boolean) : (typeof parsed === 'string' && parsed !== 'null' ? [parsed] : [])
         } catch {
-          photosArr = [editingPkg.photos]
+          photosArr = typeof editingPkg.photos === 'string' && editingPkg.photos !== 'null' ? [editingPkg.photos] : []
         }
       }
       photosArr.push(res.url)
@@ -601,7 +602,8 @@ export const AdminPackagesClient: React.FC = () => {
                         let currentSteps: any[] = []
                         if (editingPkg.itinerarySteps) {
                           try {
-                            currentSteps = typeof editingPkg.itinerarySteps === 'string' ? JSON.parse(editingPkg.itinerarySteps) : editingPkg.itinerarySteps
+                            const parsed = typeof editingPkg.itinerarySteps === 'string' ? JSON.parse(editingPkg.itinerarySteps) : editingPkg.itinerarySteps
+                            currentSteps = Array.isArray(parsed) ? parsed.filter(Boolean) : []
                           } catch {
                             currentSteps = []
                           }
@@ -621,7 +623,8 @@ export const AdminPackagesClient: React.FC = () => {
                       let steps: any[] = []
                       if (editingPkg.itinerarySteps) {
                         try {
-                          steps = typeof editingPkg.itinerarySteps === 'string' ? JSON.parse(editingPkg.itinerarySteps) : editingPkg.itinerarySteps
+                          const parsed = typeof editingPkg.itinerarySteps === 'string' ? JSON.parse(editingPkg.itinerarySteps) : editingPkg.itinerarySteps
+                          steps = Array.isArray(parsed) ? parsed.filter(Boolean) : []
                         } catch {
                           steps = []
                         }
@@ -777,7 +780,10 @@ export const AdminPackagesClient: React.FC = () => {
                           if (val) {
                             let photosArr: string[] = []
                             if (editingPkg.photos) {
-                              try { photosArr = JSON.parse(editingPkg.photos) } catch { photosArr = [editingPkg.photos] }
+                              try {
+                                const parsed = typeof editingPkg.photos === 'string' ? JSON.parse(editingPkg.photos) : editingPkg.photos
+                                photosArr = Array.isArray(parsed) ? parsed.filter(Boolean) : (typeof parsed === 'string' && parsed !== 'null' ? [parsed] : [])
+                              } catch { photosArr = typeof editingPkg.photos === 'string' && editingPkg.photos !== 'null' ? [editingPkg.photos] : [] }
                             }
                             photosArr.push(val)
                             setEditingPkg({ ...editingPkg, photos: JSON.stringify(photosArr) })
@@ -793,14 +799,17 @@ export const AdminPackagesClient: React.FC = () => {
                         if (inputEl && inputEl.value.trim()) {
                           let photosArr: string[] = []
                           if (editingPkg.photos) {
-                            try { photosArr = JSON.parse(editingPkg.photos) } catch { photosArr = [editingPkg.photos] }
+                            try {
+                              const parsed = typeof editingPkg.photos === 'string' ? JSON.parse(editingPkg.photos) : editingPkg.photos
+                              photosArr = Array.isArray(parsed) ? parsed.filter(Boolean) : (typeof parsed === 'string' && parsed !== 'null' ? [parsed] : [])
+                            } catch { photosArr = typeof editingPkg.photos === 'string' && editingPkg.photos !== 'null' ? [editingPkg.photos] : [] }
                           }
                           photosArr.push(inputEl.value.trim())
                           setEditingPkg({ ...editingPkg, photos: JSON.stringify(photosArr) })
                           inputEl.value = ''
                         }
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-[#D4AF37] text-[#0B0F17] font-bold text-xs hover:bg-[#E5C158] transition"
+                      className="px-3 py-1.5 rounded-lg bg-[#D4AF37] text-[#0B0F17] font-bold text-xs hover:bg-[#E5C158] transition"
                     >
                       + إضافة الرابط
                     </button>
@@ -812,9 +821,10 @@ export const AdminPackagesClient: React.FC = () => {
                       let arr: string[] = []
                       if (editingPkg.photos) {
                         try {
-                          arr = typeof editingPkg.photos === 'string' ? JSON.parse(editingPkg.photos) : editingPkg.photos
+                          const parsed = typeof editingPkg.photos === 'string' ? JSON.parse(editingPkg.photos) : editingPkg.photos
+                          arr = Array.isArray(parsed) ? parsed.filter(Boolean) : (typeof parsed === 'string' && parsed !== 'null' ? [parsed] : [])
                         } catch {
-                          arr = [editingPkg.photos]
+                          arr = typeof editingPkg.photos === 'string' && editingPkg.photos !== 'null' ? [editingPkg.photos] : []
                         }
                       }
                       if (arr.length === 0) {

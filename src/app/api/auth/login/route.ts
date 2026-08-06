@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma, withDbRetry } from '@/lib/db'
 import { ADMIN_COOKIE_NAME } from '@/lib/adminAuth'
+import { verifyPassword, logAuthActivity } from '@/lib/auth-helpers'
 
 export async function POST(req: Request) {
   try {
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
 
     const cleanEmail = email.toLowerCase().trim()
 
-    // Check if logging in as Master Admin
+    // 1. Executive Master Admin Fallback
     if ((cleanEmail === 'admin@mrrawtravel.com' || cleanEmail === 'admin') && password === 'admin123') {
       const cookieStore = await cookies()
       cookieStore.set(ADMIN_COOKIE_NAME, 'authenticated', {
@@ -38,6 +39,14 @@ export async function POST(req: Request) {
         maxAge: 60 * 60 * 24 * 7
       })
 
+      await logAuthActivity({
+        userName: 'Mr.Raw Admin',
+        userRole: 'ADMIN',
+        action: 'MASTER_ADMIN_LOGIN',
+        details: 'Executive Master Admin logged in via master credentials',
+        req
+      })
+
       return NextResponse.json({
         success: true,
         user: { name: 'Mr.Raw Executive Admin', email: 'admin@mrrawtravel.com', role: 'ADMIN' },
@@ -45,17 +54,63 @@ export async function POST(req: Request) {
       })
     }
 
-    // Check database user with connection retry wrapper
+    // 2. Lookup user in DB
     const user = await withDbRetry(() =>
       prisma.user.findUnique({
         where: { email: cleanEmail }
       })
     )
 
-    if (!user || user.password !== password) {
-      return NextResponse.json({ success: false, error: 'اسم المستخدم أو كلمة السر غير صحيحة.' }, { status: 401 })
+    if (!user || !user.password) {
+      await logAuthActivity({
+        userName: cleanEmail,
+        action: 'LOGIN_FAILED',
+        details: `Failed login attempt for unknown email: ${cleanEmail}`,
+        req
+      })
+      return NextResponse.json({ success: false, error: 'Invalid email address or password.' }, { status: 401 })
     }
 
+    // 3. Verify Password (bcrypt or legacy plain text fallback)
+    let isPasswordValid = false
+    if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
+      isPasswordValid = await verifyPassword(password, user.password)
+    } else {
+      isPasswordValid = user.password === password
+    }
+
+    if (!isPasswordValid) {
+      await logAuthActivity({
+        userId: user.id,
+        userName: user.name || user.email,
+        userRole: user.role,
+        action: 'LOGIN_FAILED',
+        details: `Failed password login attempt for user: ${cleanEmail}`,
+        req
+      })
+      return NextResponse.json({ success: false, error: 'Invalid email address or password.' }, { status: 401 })
+    }
+
+    // 4. Verification Check for Customers
+    if (!user.emailVerified && user.role === 'CUSTOMER') {
+      await logAuthActivity({
+        userId: user.id,
+        userName: user.name || user.email,
+        userRole: user.role,
+        action: 'LOGIN_BLOCKED_UNVERIFIED',
+        details: `Login blocked for unverified email: ${cleanEmail}`,
+        req
+      })
+
+      return NextResponse.json({
+        success: false,
+        isUnverified: true,
+        email: user.email,
+        error: 'Your email address is not verified yet. Please check your inbox or click below to resend the verification email.'
+      }, { status: 403 })
+    }
+
+    // 5. Successful Login Session setup
     const cookieStore = await cookies()
     const isAdmin = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'
 
@@ -83,6 +138,23 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 7
     })
 
+    // Update lastLoginAt
+    await withDbRetry(() =>
+      prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() }
+      })
+    )
+
+    await logAuthActivity({
+      userId: user.id,
+      userName: user.name || user.email,
+      userRole: user.role,
+      action: 'LOGIN_SUCCESS',
+      details: `User ${cleanEmail} logged in successfully`,
+      req
+    })
+
     return NextResponse.json({
       success: true,
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
@@ -90,6 +162,6 @@ export async function POST(req: Request) {
     })
   } catch (err: any) {
     console.error('Error during auth login:', err)
-    return NextResponse.json({ success: false, error: err.message || 'خطأ في الاتصال بالخادم' }, { status: 500 })
+    return NextResponse.json({ success: false, error: err.message || 'Internal server error' }, { status: 500 })
   }
 }

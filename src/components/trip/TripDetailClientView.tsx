@@ -102,11 +102,11 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
   const itineraryStr = selectedPackage?.itinerarySteps || (isArabic ? trip.itineraryAr : isGerman ? trip.itineraryDe : trip.itineraryEn)
 
   const safeParseList = (raw?: string | null): string[] => {
-    if (!raw) return []
+    if (!raw || raw === 'null' || raw === 'undefined') return []
     try {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed.map(String)
-      if (typeof parsed === 'string') return [parsed]
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean)
+      if (typeof parsed === 'string' && parsed !== 'null') return [parsed]
       return [raw]
     } catch {
       if (raw.includes('\n')) return raw.split('\n').map((s) => s.trim()).filter(Boolean)
@@ -115,20 +115,26 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
     }
   }
 
-  const safeParseItinerary = (raw?: string | null): { time: string; title: string; desc: string }[] => {
-    if (!raw) return []
+  const safeParseItinerary = (raw?: string | null): { time?: string; title?: string; titleAr?: string; titleEn?: string; titleDe?: string; desc?: string; descAr?: string; descEn?: string; descDe?: string }[] => {
+    if (!raw || raw === 'null' || raw === 'undefined') return []
     try {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
-        return parsed.map((step: any) => ({
+        return parsed.filter(Boolean).map((step: any) => ({
           time: step.time || step.timeEn || step.timeAr || '09:00 AM',
-          title: isArabic ? (step.titleAr || step.title || step.titleEn) : (step.titleEn || step.title || step.titleAr),
-          desc: isArabic ? (step.descAr || step.desc || step.descEn || '') : (step.descEn || step.desc || step.descAr || '')
+          title: step.title,
+          titleAr: step.titleAr || (isArabic ? step.title : undefined),
+          titleEn: step.titleEn || (!isArabic ? step.title : undefined),
+          titleDe: step.titleDe,
+          desc: step.desc,
+          descAr: step.descAr || (isArabic ? step.desc : undefined),
+          descEn: step.descEn || (!isArabic ? step.desc : undefined),
+          descDe: step.descDe
         }))
       }
-      return [{ time: '09:00 AM', title: raw, desc: '' }]
+      return [{ time: '09:00 AM', title: raw }]
     } catch {
-      return [{ time: '09:00 AM', title: raw, desc: '' }]
+      return [{ time: '09:00 AM', title: raw }]
     }
   }
 
@@ -139,12 +145,21 @@ export const TripDetailClientView: React.FC<TripDetailClientViewProps> = ({ trip
   let packagePhotos: string[] = []
   if (selectedPackage?.photos) {
     try {
-      packagePhotos = typeof selectedPackage.photos === 'string' ? JSON.parse(selectedPackage.photos) : selectedPackage.photos
+      const parsed = typeof selectedPackage.photos === 'string' ? JSON.parse(selectedPackage.photos) : selectedPackage.photos
+      if (Array.isArray(parsed)) {
+        packagePhotos = parsed.filter(Boolean).map(String)
+      } else if (typeof parsed === 'string' && parsed !== 'null') {
+        packagePhotos = [parsed]
+      }
     } catch {
-      packagePhotos = [selectedPackage.photos]
+      if (typeof selectedPackage.photos === 'string' && selectedPackage.photos !== 'null') {
+        packagePhotos = [selectedPackage.photos]
+      }
     }
   }
-  const displayPhotos = packagePhotos.length > 0 ? packagePhotos : (trip.images?.map(i => i.url) || [])
+  const displayPhotos = (packagePhotos && packagePhotos.length > 0)
+    ? packagePhotos
+    : (trip.images?.map(i => i.url) || [trip.coverImage].filter(Boolean))
 
   return (
     <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">

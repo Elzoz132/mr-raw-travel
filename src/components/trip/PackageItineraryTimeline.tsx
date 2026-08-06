@@ -5,10 +5,12 @@ import { motion } from 'framer-motion'
 import { Clock, CheckCircle2, Navigation, Anchor, Utensils, Waves, Sun, Compass } from 'lucide-react'
 
 export interface ItineraryStep {
-  time: string
-  titleEn: string
-  titleAr: string
-  titleDe: string
+  time?: string
+  title?: string
+  titleEn?: string
+  titleAr?: string
+  titleDe?: string
+  desc?: string
   descEn?: string
   descAr?: string
   descDe?: string
@@ -16,17 +18,42 @@ export interface ItineraryStep {
 }
 
 interface PackageItineraryTimelineProps {
-  steps: ItineraryStep[]
+  steps?: ItineraryStep[] | null
   language: string
+}
+
+// Auto-translation dictionary for common excursion timeline items
+const timelineTranslations: Record<string, { ar: string; de: string }> = {
+  'hotel pickup': { ar: 'الانتقال والتوصيل من الفندق بالباص المكيف', de: 'Hotelabholung und Transfer' },
+  'hotel pickup & transfer': { ar: 'الانتقال والتوصيل من الفندق بالباص المكيف', de: 'Hotelabholung und Transfer' },
+  'arrival at safari station': { ar: 'الوصول إلى محطة السفاري وتلقي التعليمات', de: 'Ankunft an der Safari-Station' },
+  'quad bike ride': { ar: 'قيادة البيتش باجي (Quad Bike) في الصحراء', de: 'Quad-Bike-Fahrt in der Wüste' },
+  'quad bike riding': { ar: 'قيادة البيتش باجي (Quad Bike) في الصحراء', de: 'Quad-Bike-Fahrt in der Wüste' },
+  'bedouin village visit': { ar: 'زيارة القرية البدوية وتناول الشاي الجبلي', de: 'Besuch des Beduinendorfs' },
+  'camel ride': { ar: 'تجربة ركوب الجمال في قلب الصحراء', de: 'Kamelreiten in der Wüste' },
+  'camel riding': { ar: 'تجربة ركوب الجمال في قلب الصحراء', de: 'Kamelreiten in der Wüste' },
+  'dinner': { ar: 'وجبة العشاء البدوي الفاخر والمشويات', de: 'Beduinen-Abendessen vom Grill' },
+  'bedouin dinner': { ar: 'وجبة العشاء البدوي الفاخر والمشويات', de: 'Beduinen-Abendessen vom Grill' },
+  'oriental show': { ar: 'العرض الشرقي والحفلة الفلكلورية (تنورة وحواة)', de: 'Orient-Show und Folklore' },
+  'oriental show & folklore': { ar: 'العرض الشرقي والحفلة الفلكلورية (تنورة وحواة)', de: 'Orient-Show und Folklore' },
+  'return to hotel': { ar: 'العودة والتوصيل إلى الفندق', de: 'Rücktransfer zum Hotel' },
+  'return transfer to hotel': { ar: 'العودة والتوصيل إلى الفندق', de: 'Rücktransfer zum Hotel' },
+  'boat departure': { ar: 'الإبحار وتوجيهات السلامة من طاقم اليخت', de: 'Abfahrt des Bootes und Sicherheitsbriefing' },
+  'boat departure & safety briefing': { ar: 'الإبحار وتوجيهات السلامة من طاقم اليخت', de: 'Abfahrt des Bootes und Sicherheitsbriefing' },
+  'first coral reef snorkeling stop': { ar: 'وقفة السنوركلينج الأولى لمشاهدة الشعاب المرجانية', de: 'Erster Schnorchelstopp an den Korallenriffen' },
+  'open buffet seafood & bbq lunch': { ar: 'وجبة الغداء بوفيه مفتوح ومأكولات بحرية ومشروبات', de: 'Mittagsbuffet mit Meeresfrüchten an Bord' },
+  'island stay & relaxation': { ar: 'النزول والاسترخاء على شاطئ الجزيرة', de: 'Inselaufenthalt und Entspannung' }
 }
 
 export const PackageItineraryTimeline: React.FC<PackageItineraryTimelineProps> = ({ steps, language }) => {
   const isArabic = language === 'ar'
   const isGerman = language === 'de'
 
-  if (!steps || steps.length === 0) {
+  let safeSteps: ItineraryStep[] = Array.isArray(steps) ? steps.filter(Boolean) : []
+
+  if (safeSteps.length === 0) {
     // Fallback default timeline steps if package doesn't have custom itinerary steps
-    steps = [
+    safeSteps = [
       { time: '08:00 AM', titleEn: 'Hotel Pickup & Transfer', titleAr: 'الانتقال من الفندق بالباص المكيف', titleDe: 'Hotelabholung und Transfer' },
       { time: '09:00 AM', titleEn: 'Boat Departure & Safety Briefing', titleAr: 'الإبحار وتوجيهات السلامة', titleDe: 'Abfahrt des Bootes' },
       { time: '10:30 AM', titleEn: 'First Coral Reef Snorkeling Stop', titleAr: 'وقفة السنوركلينج الأولى للشعاب المرجانية', titleDe: 'Erster Schnorchelstopp' },
@@ -36,24 +63,52 @@ export const PackageItineraryTimeline: React.FC<PackageItineraryTimelineProps> =
     ]
   }
 
-  const getTitle = (step: ItineraryStep) => isArabic ? step.titleAr : isGerman ? step.titleDe : step.titleEn
-  const getDesc = (step: ItineraryStep) => isArabic ? step.descAr : isGerman ? step.descDe : step.descEn
+  const getTitle = (step: ItineraryStep) => {
+    let rawTitle = isArabic
+      ? (step.titleAr || step.title)
+      : isGerman
+      ? (step.titleDe || step.titleEn || step.title)
+      : (step.titleEn || step.title || step.titleAr)
+
+    if (!rawTitle) rawTitle = step.titleEn || step.titleAr || ''
+
+    // If language is Arabic or German and the text is English, attempt auto-translation from dictionary
+    const key = rawTitle.trim().toLowerCase()
+    if (isArabic && timelineTranslations[key]) {
+      return timelineTranslations[key].ar
+    }
+    if (isGerman && timelineTranslations[key]) {
+      return timelineTranslations[key].de
+    }
+
+    return rawTitle
+  }
+
+  const getDesc = (step: ItineraryStep) => {
+    const rawDesc = isArabic
+      ? (step.descAr || step.desc)
+      : isGerman
+      ? (step.descDe || step.descEn || step.desc)
+      : (step.descEn || step.desc || step.descAr)
+
+    return rawDesc || ''
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#D4AF37]">
         <Clock className="w-4 h-4" />
-        <span>{isArabic ? 'جدول وبرنامج الرحلة التفصيلي' : 'Interactive Excursion Timeline'}</span>
+        <span>{isArabic ? 'جدول وبرنامج الرحلة التفصيلي' : isGerman ? 'Detaillierter Reiseverlauf' : 'Interactive Excursion Timeline'}</span>
       </div>
 
       <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-2.5 sm:before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-[#D4AF37] before:via-[#D4AF37]/40 before:to-transparent">
-        {steps.map((step, idx) => (
+        {safeSteps.map((step, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, x: -15 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: idx * 0.1 }}
+            transition={{ duration: 0.4, delay: idx * 0.05 }}
             className="relative flex items-start gap-4 group"
           >
             {/* Timeline Dot */}
@@ -65,9 +120,9 @@ export const PackageItineraryTimeline: React.FC<PackageItineraryTimelineProps> =
             <div className="glass-panel rounded-2xl p-4 border border-white/10 w-full space-y-1 group-hover:border-[#D4AF37]/50 transition-all">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30">
-                  {step.time}
+                  {step.time || `Phase ${idx + 1}`}
                 </span>
-                <span className="text-[10px] text-slate-400 font-semibold uppercase">Step {idx + 1}</span>
+                <span className="text-[10px] text-slate-400 font-semibold uppercase">{isArabic ? `المرحلة ${idx + 1}` : `Step ${idx + 1}`}</span>
               </div>
               <h4 className="text-sm font-bold text-white group-hover:text-[#D4AF37] transition-colors">
                 {getTitle(step)}
@@ -84,3 +139,4 @@ export const PackageItineraryTimeline: React.FC<PackageItineraryTimelineProps> =
     </div>
   )
 }
+
