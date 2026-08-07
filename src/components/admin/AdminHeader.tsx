@@ -33,7 +33,6 @@ export const AdminHeader: React.FC = () => {
     { href: '/admin/crm', label: isArabic ? '👥 العملاء' : 'Customers' },
     { href: '/admin/coupons', label: isArabic ? '🎟️ الخصومات' : 'Coupons' },
     { href: '/admin/gateways', label: isArabic ? '💳 بوابات الدفع' : 'Payment Gateways' },
-    { href: '/admin/communication', label: isArabic ? '✉️ مركز الإيميلات والرسائل' : 'Communication Center' },
     { href: '/admin/users', label: isArabic ? '👤 المستخدمين' : 'Users' },
     { href: '/admin/permissions', label: isArabic ? '🛡️ الصلاحيات' : 'Permissions' },
     { href: '/admin/activity', label: isArabic ? '📜 سجل الأنشطة' : 'Activity Log' },
