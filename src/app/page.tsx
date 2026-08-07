@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { ensureDefaultTripsAndPackagesExist } from '@/lib/seedHelper'
 import { HeroSection } from '@/components/home/HeroSection'
 import { PopularTrips, TripCardData } from '@/components/home/PopularTrips'
 import { CategoryGrid } from '@/components/home/CategoryGrid'
@@ -15,6 +16,8 @@ export default async function HomePage() {
   let trips: TripCardData[] = []
 
   try {
+    await ensureDefaultTripsAndPackagesExist()
+
     const dbTrips = await prisma.trip.findMany({
       orderBy: { createdAt: 'desc' }
     })
