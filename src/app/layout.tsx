@@ -46,6 +46,7 @@ export const metadata: Metadata = {
 
 import { LuxurySplashLoader } from '@/components/common/LuxurySplashLoader'
 import { PageTransition } from '@/components/common/PageTransition'
+import { Analytics } from '@vercel/analytics/next'
 
 export default function RootLayout({
   children,
@@ -68,6 +69,7 @@ export default function RootLayout({
           </main>
           <FloatingWhatsAppWidget />
           <Footer />
+          <Analytics />
         </SmoothScrollProvider>
       </body>
     </html>
