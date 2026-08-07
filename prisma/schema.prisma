@@ -42,6 +42,9 @@ model User {
   loginHistories     LoginHistory[]
   sessions           UserSession[]
   customerProfile    CustomerProfile?
+  loyaltyPoints      LoyaltyPoints?
+  loyaltyTransactions LoyaltyTransaction[]
+  notifications      Notification[]
 
   @@index([email])
   @@index([role])
@@ -347,6 +350,9 @@ model Booking {
 
   qrToken         String        @unique
   voucherPdfUrl   String?
+  pointsEarned    Int           @default(0)
+  cancellationReason String?
+  rejectionReason String?
   
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -355,6 +361,7 @@ model Booking {
   payments        Payment[]
   receipts        PaymentReceipt[]
   reviews         Review[]
+  loyaltyTransactions LoyaltyTransaction[]
 
   @@index([bookingNumber])
   @@index([userId])
@@ -694,6 +701,45 @@ model EmailLog {
 
   @@index([email])
   @@index([templateKey])
+}
+
+model LoyaltyPoints {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pointsBalance  Int      @default(0)
+  lifetimePoints Int      @default(0)
+  updatedAt      DateTime @updatedAt
+}
+
+model LoyaltyTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId   String?
+  booking     Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  points      Int      // Positive for earned, negative for redeemed/deducted
+  type        String   // EARNED_BOOKING, REDEEMED_COUPON, CANCELLED_DEDUCTION, ADMIN_ADJUSTMENT
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userEmail String
+  title     String
+  message   String
+  type      String   @default("INFO") // BOOKING_CONFIRMED, PAYMENT_REJECTED, PAYMENT_APPROVED, BOOKING_CANCELLED, LOYALTY_EARNED, COUPON_CREATED
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userEmail])
+  @@index([userId])
 }
 
 

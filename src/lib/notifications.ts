@@ -1,3 +1,59 @@
+import { prisma } from '@/lib/db'
+import { sendEmail } from '@/lib/email/resend'
+
+export interface InAppNotificationParams {
+  userId?: string | null
+  userEmail: string
+  title: string
+  message: string
+  type?: string
+  link?: string
+}
+
+export async function createInAppNotification(params: InAppNotificationParams): Promise<void> {
+  try {
+    const cleanEmail = params.userEmail.toLowerCase().trim()
+
+    let userId = params.userId
+    if (!userId) {
+      const user = await prisma.user.findFirst({
+        where: { email: { equals: cleanEmail, mode: 'insensitive' } }
+      })
+      if (user) userId = user.id
+    }
+
+    await prisma.notification.create({
+      data: {
+        userId: userId || null,
+        userEmail: cleanEmail,
+        title: params.title,
+        message: params.message,
+        type: params.type || 'INFO',
+        link: params.link || '/customer'
+      }
+    })
+
+    // Send real email notification
+    await sendEmail({
+      to: cleanEmail,
+      subject: params.title,
+      html: `
+        <div style="font-family: Arial, sans-serif; background-color: #0B0F17; color: #ffffff; padding: 30px; border-radius: 16px; border: 1px solid #D4AF37;">
+          <h2 style="color: #D4AF37; margin-bottom: 20px;">${params.title}</h2>
+          <p style="font-size: 15px; line-height: 1.6; color: #e2e8f0;">${params.message}</p>
+          <div style="margin-top: 30px;">
+            <a href="https://www.mrrawtravel.com${params.link || '/customer'}" style="background-color: #D4AF37; color: #0B0F17; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 8px; display: inline-block;">عرض التفاصيل في حسابك</a>
+          </div>
+          <hr style="border-color: rgba(255,255,255,0.1); margin-top: 40px;" />
+          <p style="font-size: 12px; color: #94a3b8; text-align: center;">Mr.Raw Travel - Luxury Tourism & Excursions Hurghada</p>
+        </div>
+      `
+    })
+  } catch (err) {
+    console.error('Error creating in-app notification:', err)
+  }
+}
+
 export async function sendAdminBookingAlert(bookingData: {
   bookingNumber: string
   fullName: string
@@ -27,7 +83,6 @@ export async function sendAdminBookingAlert(bookingData: {
 💰 <b>إجمالي المبلغ:</b> ${bookingData.totalPrice} ${bookingData.currency}
 💳 <b>طريقة الدفع:</b> ${bookingData.paymentMethod || 'CASH'}`
 
-  // 1. Send via Telegram Bot API if configured
   const botToken = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
 
@@ -49,7 +104,6 @@ export async function sendAdminBookingAlert(bookingData: {
     }
   }
 
-  // 2. Generate WhatsApp direct admin link
   const rawWaText = `🚨 حجز جديد برقم ${bookingData.bookingNumber}\n` +
     `👤 العميل: ${bookingData.fullName}\n` +
     `⛵ الرحلة: ${bookingData.tripName}\n` +

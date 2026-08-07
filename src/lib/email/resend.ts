@@ -54,17 +54,18 @@ export type EmailTemplateKey =
 interface SendEmailOptions {
   to: string
   subject?: string
-  templateKey: EmailTemplateKey
-  props: Record<string, any>
+  templateKey?: EmailTemplateKey
+  props?: Record<string, any>
+  html?: string
 }
 
 /**
  * Enterprise Production Dual Email Dispatcher (Resend + Gmail Nodemailer SMTP)
  */
-export async function sendEmail({ to, subject, templateKey, props }: SendEmailOptions) {
+export async function sendEmail({ to, subject, templateKey, props = {}, html: customHtml }: SendEmailOptions) {
   const branding = await getEmailBranding()
   let defaultSubject = subject || 'MR.RAW Travel Notification'
-  let html = ''
+  let html = customHtml || ''
 
   // Read settings from DB
   const dbSettingsMap: Record<string, string> = {}
@@ -73,8 +74,7 @@ export async function sendEmail({ to, subject, templateKey, props }: SendEmailOp
     settingsList.forEach((s: any) => { dbSettingsMap[s.key] = s.value })
   } catch (e) {}
 
-  // Check template enabled
-  if (dbSettingsMap[`email_template_${templateKey}_enabled`] === 'false') {
+  if (templateKey && dbSettingsMap[`email_template_${templateKey}_enabled`] === 'false') {
     console.log(`[Email Engine] Template ${templateKey} is disabled in Admin settings.`)
     return { success: true, status: 'DISABLED' }
   }
@@ -199,7 +199,7 @@ export async function sendEmail({ to, subject, templateKey, props }: SendEmailOp
         data: {
           email: to,
           subject: defaultSubject,
-          templateKey,
+          templateKey: templateKey || 'CUSTOM_NOTIFICATION',
           status: sendStatus,
           error: errorMessage
         }

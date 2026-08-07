@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { isAdminAuthenticated } from '@/lib/adminAuth'
 import { AdminBookingsClient } from '@/components/admin/AdminBookingsClient'
 
-export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
 export default async function AdminBookingsPage() {
   const isAuth = await isAdminAuthenticated()
@@ -16,7 +16,7 @@ export default async function AdminBookingsPage() {
   try {
     bookings = await prisma.booking.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { trip: true, receipts: true }
+      include: { trip: true, package: true, receipts: true }
     })
   } catch (err) {
     console.error('Error fetching admin bookings:', err)
