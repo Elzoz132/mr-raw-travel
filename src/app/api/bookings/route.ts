@@ -4,6 +4,9 @@ import { prisma } from '@/lib/db'
 import { generateBookingNumber } from '@/lib/utils'
 import { upsertCustomerCrmProfile } from '@/lib/crm'
 import { sendAdminBookingAlert } from '@/lib/notifications'
+import { logAuditEvent } from '@/lib/auditLogger'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
   try {
@@ -11,16 +14,17 @@ export async function POST(req: Request) {
 
     const tripId = body.tripId
     const packageId = body.packageId || null
-    const tripDate = body.tripDate || new Date().toISOString()
-    const adults = Number(body.adults) || 1
-    const children = Number(body.children) || 0
+    const tripDateStr = body.tripDate || new Date().toISOString()
+    const tripDate = new Date(tripDateStr)
+    const adults = Math.max(1, Number(body.adults) || 1)
+    const children = Math.max(0, Number(body.children) || 0)
     const currency = body.currency || 'USD'
     const totalPrice = Number(body.totalPrice) || 0
 
-    const fullName = body.fullName || body.leadPassengerName || 'Guest Passenger'
-    const email = body.email || body.leadEmail || 'guest@mrrawtravel.com'
-    const phone = body.phone || body.leadPhone || '+201070657476'
-    const whatsApp = body.whatsApp || body.whatsappPhone || body.leadWhatsApp || phone
+    const fullName = (body.fullName || body.leadPassengerName || 'Guest Passenger').trim()
+    const email = (body.email || body.leadEmail || 'guest@mrrawtravel.com').toLowerCase().trim()
+    const phone = (body.phone || body.leadPhone || '+201070657476').trim()
+    const whatsApp = (body.whatsApp || body.whatsappPhone || body.leadWhatsApp || phone).trim()
     const nationality = body.nationality || 'Egyptian'
 
     const hotelName = body.hotelName || 'Hurghada Hotel'
@@ -35,7 +39,7 @@ export async function POST(req: Request) {
     const selectedAddons = body.selectedAddons ? (typeof body.selectedAddons === 'string' ? body.selectedAddons : JSON.stringify(body.selectedAddons)) : null
     const isCustomPackage = Boolean(body.isCustomPackage)
 
-    // Fetch default trip if tripId is not a valid UUID
+    // Fetch default trip if tripId is not provided or placeholder
     let targetTripId = tripId
     if (!targetTripId || targetTripId === '1') {
       const firstTrip = await prisma.trip.findFirst()
@@ -44,10 +48,33 @@ export async function POST(req: Request) {
       }
     }
 
+    if (!targetTripId) {
+      return NextResponse.json({ success: false, error: 'A valid excursion must be selected for booking.' }, { status: 400 })
+    }
+
+    // 1. Anti-Duplicate / Anti-Double Submit check (within last 60 seconds)
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000)
+    const recentDuplicate = await prisma.booking.findFirst({
+      where: {
+        leadEmail: email,
+        tripId: targetTripId,
+        createdAt: { gte: oneMinuteAgo }
+      }
+    })
+
+    if (recentDuplicate) {
+      return NextResponse.json({
+        success: true,
+        bookingId: recentDuplicate.id,
+        bookingNumber: recentDuplicate.bookingNumber,
+        qrToken: recentDuplicate.qrToken,
+        message: 'Existing booking found.'
+      })
+    }
+
     const bookingNumber = generateBookingNumber()
     const qrToken = `MRRAW-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`
 
-    // Determine initial statuses
     let paymentStatus = 'PENDING'
     let bookingStatus = 'PENDING'
 
@@ -59,49 +86,67 @@ export async function POST(req: Request) {
       bookingStatus = 'CONFIRMED'
     }
 
-    // 1. Create Booking in Database
-    const booking = await prisma.booking.create({
-      data: {
-        bookingNumber,
-        tripId: targetTripId,
-        packageId,
-        selectedAddons,
-        isCustomPackage,
-        tripDate: new Date(tripDate),
-        adults,
-        children,
-        currency,
-        totalPrice,
-        pickupLocation: `${hotelName} ${hotelAddress ? `(${hotelAddress})` : ''}`,
-        hotelName,
-        hotelAddress,
-        roomNumber,
-        leadPassengerName: fullName,
-        leadEmail: email,
-        leadPhone: phone,
-        leadWhatsApp: whatsApp,
-        leadNationality: nationality,
-        emergencyContact,
-        specialNotes,
-        paymentMethod,
-        paymentStatus,
-        bookingStatus,
-        qrToken,
-      }
-    })
-
-    // 2. If receipt uploaded, create PaymentReceipt record
-    if (receiptUrl) {
-      await prisma.paymentReceipt.create({
+    // 2. Execute Booking Creation inside an Atomic Database Transaction
+    const totalPassengers = adults + children
+    const booking = await prisma.$transaction(async (tx) => {
+      const newBooking = await tx.booking.create({
         data: {
-          bookingId: booking.id,
-          imageUrl: receiptUrl,
-          status: 'PENDING'
+          bookingNumber,
+          tripId: targetTripId,
+          packageId,
+          selectedAddons,
+          isCustomPackage,
+          tripDate,
+          adults,
+          children,
+          currency,
+          totalPrice,
+          pickupLocation: `${hotelName} ${hotelAddress ? `(${hotelAddress})` : ''}`,
+          hotelName,
+          hotelAddress,
+          roomNumber,
+          leadPassengerName: fullName,
+          leadEmail: email,
+          leadPhone: phone,
+          leadWhatsApp: whatsApp,
+          leadNationality: nationality,
+          emergencyContact,
+          specialNotes,
+          paymentMethod,
+          paymentStatus,
+          bookingStatus,
+          qrToken,
         }
       })
-    }
 
-    // 3. Upsert Customer CRM Profile
+      if (receiptUrl) {
+        await tx.paymentReceipt.create({
+          data: {
+            bookingId: newBooking.id,
+            imageUrl: receiptUrl,
+            status: 'PENDING'
+          }
+        })
+      }
+
+      // Update bookedSeats on Trip
+      await tx.trip.update({
+        where: { id: targetTripId },
+        data: { bookedSeats: { increment: totalPassengers } }
+      })
+
+      return newBooking
+    })
+
+    // 3. Log Audit Event
+    await logAuditEvent({
+      action: 'BOOKING_CREATED',
+      resource: 'BOOKINGS',
+      details: { bookingNumber: booking.bookingNumber, tripId: targetTripId, email, totalPrice, currency },
+      req
+    })
+
+    // 4. Upsert Customer CRM Profile
     await upsertCustomerCrmProfile({
       email,
       name: fullName,
@@ -111,12 +156,10 @@ export async function POST(req: Request) {
       spendUsd: currency === 'USD' ? totalPrice : totalPrice / 1.0,
     })
 
-    // 4. Dispatch Instant Admin Notification (Telegram Bot & WhatsApp Alert Link)
+    // 5. Dispatch Alerts
     let tripName = 'Mr. Raw Luxury Excursion'
-    if (targetTripId) {
-      const t = await prisma.trip.findUnique({ where: { id: targetTripId } })
-      if (t) tripName = t.titleAr || t.titleEn
-    }
+    const t = await prisma.trip.findUnique({ where: { id: targetTripId } })
+    if (t) tripName = t.titleAr || t.titleEn
 
     const notificationResult = await sendAdminBookingAlert({
       bookingNumber: booking.bookingNumber,
@@ -125,7 +168,7 @@ export async function POST(req: Request) {
       whatsApp,
       email,
       tripName,
-      tripDate: new Date(tripDate).toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      tripDate: tripDate.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
       adults,
       children,
       totalPrice,
@@ -134,13 +177,13 @@ export async function POST(req: Request) {
       paymentMethod
     })
 
-    // 5. Automatically set user_session cookie for customer
+    // 6. Set Session Cookie
     try {
       const cookieStore = await cookies()
       cookieStore.set('user_session', JSON.stringify({
         id: booking.userId || undefined,
         name: fullName,
-        email: email.toLowerCase().trim(),
+        email: email,
         role: 'CUSTOMER'
       }), {
         httpOnly: true,
@@ -168,7 +211,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Error creating booking API:', error)
     return NextResponse.json(
-      { error: error?.message || 'Internal server error creating booking.' },
+      { success: false, error: 'Failed to complete booking. Please try again.' },
       { status: 500 }
     )
   }
@@ -193,7 +236,6 @@ export async function GET(req: Request) {
     }
 
     if (adminSession?.value === 'authenticated' && !email) {
-      // Admin request: return all recent bookings
       const bookings = await prisma.booking.findMany({
         take: 50,
         orderBy: { createdAt: 'desc' },
@@ -217,6 +259,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ success: true, bookings })
   } catch (error: any) {
     console.error('Error fetching bookings:', error)
-    return NextResponse.json({ success: false, error: error.message, bookings: [] })
+    return NextResponse.json({ success: false, error: 'Failed to fetch bookings.', bookings: [] }, { status: 500 })
   }
 }

@@ -21,7 +21,8 @@ const ROLE_ROUTE_PERMISSIONS: Record<string, string[]> = {
     '/admin/users',
     '/admin/permissions',
     '/admin/activity',
-    '/admin/sessions'
+    '/admin/sessions',
+    '/admin/communication'
   ],
   ADMIN: [
     '/admin/dashboard',
@@ -38,7 +39,8 @@ const ROLE_ROUTE_PERMISSIONS: Record<string, string[]> = {
     '/admin/coupons',
     '/admin/gateways',
     '/admin/settings',
-    '/admin/users'
+    '/admin/users',
+    '/admin/communication'
   ],
   CONTENT_EDITOR: [
     '/admin/dashboard',
@@ -62,7 +64,15 @@ const ROLE_ROUTE_PERMISSIONS: Record<string, string[]> = {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Only intercept /admin/* routes excluding login & access-denied
+  // 1. Customer Dashboard Protection
+  if (pathname.startsWith('/customer')) {
+    const userSession = req.cookies.get('user_session')?.value
+    if (!userSession) {
+      return NextResponse.redirect(new URL('/auth/login', req.url))
+    }
+  }
+
+  // 2. Admin Portal & Sub-routes RBAC Protection
   if (pathname.startsWith('/admin') && pathname !== '/admin/login' && pathname !== '/admin/access-denied') {
     const adminSession = req.cookies.get('mrraw_admin_session')?.value
     const userRoleCookie = req.cookies.get('user_role')?.value
@@ -71,7 +81,6 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/admin/login', req.url))
     }
 
-    // If authenticated via admin session cookie or super_admin/admin role cookie, grant access
     if (adminSession === 'authenticated' || userRoleCookie === 'SUPER_ADMIN' || userRoleCookie === 'ADMIN') {
       return NextResponse.next()
     }
@@ -85,9 +94,13 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next()
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  return response
 }
 
 export const config = {
-  matcher: ['/admin/:path*']
+  matcher: ['/admin/:path*', '/customer/:path*']
 }

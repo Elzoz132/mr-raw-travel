@@ -1,12 +1,16 @@
 import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mrrawtravel.com'
+
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/admin/', '/api/'],
-    },
-    sitemap: 'https://mrrawtravel.com/sitemap.xml',
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin/', '/api/', '/customer/', '/auth/']
+      }
+    ],
+    sitemap: `${baseUrl}/sitemap.xml`
   }
 }
