@@ -112,14 +112,15 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
       />
       <JsonLd
-        type="TouristAttraction"
+        type="Product"
         data={{
           title: 'Mr.Raw Travel Hurghada Excursions',
           description: 'Premier tourism platform in Hurghada, Egypt for boat trips, snorkeling, and quad safaris.',
           image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80',
           priceUsd: 45,
           rating: 4.95,
-          reviewCount: 450
+          reviewCount: 450,
+          url: 'https://mrrawtravel.com'
         }}
       />
       <HeroSection />

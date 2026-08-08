@@ -145,7 +145,7 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(tripSchema) }}
       />
       <JsonLd
-        type="TouristAttraction"
+        type="Product"
         data={{
           title: trip.titleEn,
           description: trip.descEn,
@@ -153,7 +153,8 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
           location: trip.location,
           priceUsd: trip.priceAdultUsd,
           rating: trip.rating,
-          reviewCount: trip.reviewCount
+          reviewCount: trip.reviewCount,
+          url: `https://mrrawtravel.com/trips/${trip.slug}`
         }}
       />
       <div className="pt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
