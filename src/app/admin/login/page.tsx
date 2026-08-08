@@ -28,10 +28,9 @@ export default function AdminLoginPage() {
         throw new Error(data.error || 'كلمة السر غير صحيحة')
       }
 
-      router.push('/admin/dashboard')
+      window.location.href = '/admin/dashboard'
     } catch (err: any) {
       setError(err.message || 'فشل تسجيل الدخول كإدارة.')
-    } finally {
       setLoading(false)
     }
   }
