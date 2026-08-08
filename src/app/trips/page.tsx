@@ -30,23 +30,44 @@ interface TripsPageProps {
 }
 
 export default async function TripsCatalogPage({ searchParams }: TripsPageProps) {
-  const { category } = await searchParams
+  const resolvedParams = await searchParams
+  const category = resolvedParams?.category
 
   let trips: any[] = []
 
   try {
-    const whereCondition: any = {}
+    const whereCondition: any = {
+      deletedAt: null
+    }
+
     if (category && category !== 'all') {
-      whereCondition.category = { slug: category }
+      whereCondition.OR = [
+        { category: { slug: category } },
+        { categoryId: category }
+      ]
     }
 
     trips = await prisma.trip.findMany({
       where: whereCondition,
-      orderBy: { createdAt: 'desc' },
-      include: { category: true }
+      orderBy: { createdAt: 'desc' }
     })
+
+    // Fallback: If category filter returned nothing, fetch all non-deleted trips
+    if (trips.length === 0) {
+      trips = await prisma.trip.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' }
+      })
+    }
   } catch (err) {
     console.error('Error fetching catalog trips:', err)
+    try {
+      trips = await prisma.trip.findMany({
+        orderBy: { createdAt: 'desc' }
+      })
+    } catch (fallbackErr) {
+      console.error('Fallback query error:', fallbackErr)
+    }
   }
 
   const mappedTrips = trips.map((t) => ({
