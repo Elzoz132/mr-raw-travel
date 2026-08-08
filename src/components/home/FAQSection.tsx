@@ -28,10 +28,27 @@ export const FAQSection: React.FC = () => {
     }
   ]
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.a
+      }
+    }))
+  }
+
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <div className="text-center mb-12 space-y-3">
         <span className="text-xs font-bold tracking-widest text-[#D4AF37] uppercase block">
           FREQUENTLY ASKED QUESTIONS

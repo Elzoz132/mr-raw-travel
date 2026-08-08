@@ -22,7 +22,7 @@ export const SearchModal: React.FC = () => {
   const popularSuggestions = [
     { title: 'Giftun Island & Orange Bay VIP', slug: 'giftun-island-vip-snorkeling', cat: 'Sea Trips' },
     { title: 'Mega Desert Safari & Quad Bike', slug: 'mega-desert-safari-quad-bedouin-dinner', cat: 'Safari' },
-    { title: 'Royal Private Yacht Charter', slug: 'luxury-sunset-charter-private-yacht', cat: 'VIP Yacht' },
+    { title: 'Royal Private Yacht Charter', slug: 'sunset-charter-private-yacht', cat: 'VIP Yacht' },
     { title: 'Historical Luxor & Valley of Kings', slug: 'luxor-valley-of-the-kings-vip-day-tour', cat: 'Luxor' },
   ]
 

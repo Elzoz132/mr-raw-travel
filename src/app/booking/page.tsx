@@ -72,7 +72,7 @@ export default function BookingPage() {
       instructionsAr: 'تحويل بنكي مباشر لحساب الشركة البنكي',
       details: {
         bankName: 'البنك الأهلي المصري (National Bank of Egypt)',
-        accountHolder: 'Mr.Raw Luxury Travel',
+        accountHolder: 'Mr.Raw Travel',
         accountNumber: '1234567890123456',
         iban: 'EG380002000100001234567890123',
         swiftCode: 'NBEGEGCX'
@@ -588,7 +588,7 @@ export default function BookingPage() {
                     ⚡ بيانات تحويل إنستا باي (InstaPay Transfer Details)
                   </h4>
                   <div className="bg-black/60 p-3.5 rounded-xl border border-white/10 space-y-1.5 font-mono">
-                    <div><span className="text-slate-400 text-xs font-sans">اسم الحساب (Account Name):</span> <strong className="text-white font-bold">{activeGateways['INSTAPAY']?.details?.accountName || 'Mr.Raw Luxury Travel'}</strong></div>
+                    <div><span className="text-slate-400 text-xs font-sans">اسم الحساب (Account Name):</span> <strong className="text-white font-bold">{activeGateways['INSTAPAY']?.details?.accountName || 'Mr.Raw Travel'}</strong></div>
                     <div><span className="text-slate-400 text-xs font-sans">معرف IPA Address:</span> <strong className="text-[#E5C158] font-bold">{activeGateways['INSTAPAY']?.details?.username || 'mrraw@instapay'}</strong></div>
                     <div><span className="text-slate-400 text-xs font-sans">رقم التليفون (Phone Number):</span> <strong className="text-white font-bold">{activeGateways['INSTAPAY']?.details?.phoneNumber || '01022392428'}</strong></div>
                   </div>
@@ -605,7 +605,7 @@ export default function BookingPage() {
                   </h4>
                   <div className="bg-black/60 p-3.5 rounded-xl border border-white/10 space-y-1.5 font-mono">
                     <div><span className="text-slate-400 text-xs font-sans">اسم البنك (Bank Name):</span> <strong className="text-white font-bold">{activeGateways['BANK_TRANSFER']?.details?.bankName || 'البنك الأهلي المصري (National Bank of Egypt)'}</strong></div>
-                    <div><span className="text-slate-400 text-xs font-sans">اسم صاحب الحساب:</span> <strong className="text-white font-bold">{activeGateways['BANK_TRANSFER']?.details?.accountHolder || 'Mr.Raw Luxury Travel'}</strong></div>
+                    <div><span className="text-slate-400 text-xs font-sans">اسم صاحب الحساب:</span> <strong className="text-white font-bold">{activeGateways['BANK_TRANSFER']?.details?.accountHolder || 'Mr.Raw Travel'}</strong></div>
                     <div><span className="text-slate-400 text-xs font-sans">رقم الحساب البنكي:</span> <strong className="text-white font-bold">{activeGateways['BANK_TRANSFER']?.details?.accountNumber || '1234567890123456'}</strong></div>
                     <div><span className="text-slate-400 text-xs font-sans">رقم الـ IBAN الدولي:</span> <strong className="text-[#E5C158] font-bold">{activeGateways['BANK_TRANSFER']?.details?.iban || 'EG380002000100001234567890123'}</strong></div>
                     {activeGateways['BANK_TRANSFER']?.details?.swiftCode && (

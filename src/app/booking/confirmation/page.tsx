@@ -49,7 +49,7 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/10 pb-6 gap-4">
           <div>
             <span className="text-2xl font-black gold-gradient-text block">Mr.Raw Travel</span>
-            <span className="text-[10px] uppercase tracking-widest text-slate-400">Luxury Hurghada Excursions</span>
+            <span className="text-[10px] uppercase tracking-widest text-slate-400">Mr.Raw Travel Hurghada Excursions</span>
           </div>
 
           <div className="text-right">

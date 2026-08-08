@@ -136,30 +136,40 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Column 2: Quick Excursions */}
+          {/* Column 2: Quick Excursions & Popular Categories */}
           <div>
             <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-l-2 border-[#D4AF37] pl-3">
-              {isArabic ? 'أهم الرحلات الملكية' : 'Top Excursions'}
+              {isArabic ? 'أهم رحلات الغردقة' : 'Hurghada Tours & Excursions'}
             </h3>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-xs">
               <li>
-                <Link href="/trips" className="hover:text-[#D4AF37] transition-colors">
-                  Giftun Island & Orange Bay VIP
+                <Link href="/trips?category=sea-trips" className="hover:text-[#D4AF37] transition-colors">
+                  {isArabic ? 'رحلات البحر والأجزاء البحرية (Snorkeling & Boat)' : 'Hurghada Boat Trips & Snorkeling'}
                 </Link>
               </li>
               <li>
-                <Link href="/trips" className="hover:text-[#D4AF37] transition-colors">
-                  Mega Quad Desert Safari & Bedouin Show
+                <Link href="/trips?category=sea-trips" className="hover:text-[#D4AF37] transition-colors">
+                  {isArabic ? 'جزيرة أورانج باي (Orange Bay Hurghada)' : 'Orange Bay Hurghada Island Trip'}
                 </Link>
               </li>
               <li>
-                <Link href="/trips" className="hover:text-[#D4AF37] transition-colors">
-                  Royal Private Yacht Charter
+                <Link href="/trips?category=desert-safari" className="hover:text-[#D4AF37] transition-colors">
+                  {isArabic ? 'رحلات السفاري بالبيتش باجي (Desert Safari)' : 'Desert Quad Safari Hurghada'}
                 </Link>
               </li>
               <li>
-                <Link href="/trips" className="hover:text-[#D4AF37] transition-colors">
-                  Historical Luxor & Valley of Kings Day Trip
+                <Link href="/trips?category=vip-yacht" className="hover:text-[#D4AF37] transition-colors">
+                  {isArabic ? 'يخت وفلود خاص (Private Boat & Speedboat)' : 'Private Boat & Speedboat Hurghada'}
+                </Link>
+              </li>
+              <li>
+                <Link href="/gallery" className="hover:text-[#D4AF37] transition-colors">
+                  {isArabic ? 'معرض صور الرحلات (Hurghada Gallery)' : 'Hurghada Excursions Gallery'}
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="hover:text-[#D4AF37] transition-colors">
+                  {isArabic ? 'دليل السفر والغردقة (Travel Guide & Blog)' : 'Hurghada Travel Guide & Blog'}
                 </Link>
               </li>
             </ul>
