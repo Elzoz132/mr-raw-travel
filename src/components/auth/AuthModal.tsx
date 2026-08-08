@@ -155,7 +155,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <div className="text-center space-y-2 pt-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 text-[10px] font-black uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5" />
-            MR.RAW LUXURY CLUB
+            MR.RAW TRAVEL CLUB
           </div>
           <h2 className="text-2xl font-black text-white">
             {mode === 'LOGIN'

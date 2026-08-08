@@ -1,5 +1,26 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Clock, User, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import { Breadcrumbs } from '@/components/common/Breadcrumbs'
+
+export const metadata: Metadata = {
+  title: 'دليل السفر ورحلات الغردقة | Mr.Raw Travel',
+  description: 'نصائح ومعلومات شاملة لزوار الغردقة والبحر الأحمر. اكتشف أفضل المواعيد والأماكن لرحلات السنوركلينج، Orange Bay، ورحلات السفاري.',
+  alternates: {
+    canonical: 'https://mrrawtravel.com/blog',
+    languages: {
+      'ar-EG': 'https://mrrawtravel.com/blog',
+      'en-US': 'https://mrrawtravel.com/blog',
+      'de-DE': 'https://mrrawtravel.com/blog'
+    }
+  },
+  openGraph: {
+    title: 'دليل السفر ورحلات الغردقة | Mr.Raw Travel',
+    description: 'نصائح ومعلومات حصرية لمسافري الغردقة والبحر الأحمر مع Mr.Raw Travel.',
+    url: 'https://mrrawtravel.com/blog',
+    images: [{ url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80' }]
+  }
+}
 
 export default function BlogPage() {
   const posts = [
@@ -30,13 +51,15 @@ export default function BlogPage() {
   ]
 
   return (
-    <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+    <div className="pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10">
+      <Breadcrumbs items={[{ name: 'دليل السفر والمقالات السياحية', url: 'https://mrrawtravel.com/blog' }]} />
+
       <div className="text-center max-w-3xl mx-auto space-y-3">
         <span className="text-xs font-bold uppercase tracking-widest text-[#D4AF37]">
-          SEO TRAVEL INSIGHTS
+          TRAVEL INSIGHTS & GUIDES
         </span>
         <h1 className="text-3xl sm:text-5xl font-black text-white">
-          Hurghada Travel Guide & Tips
+          دليل زوار الغردقة والبحر الأحمر
         </h1>
       </div>
 

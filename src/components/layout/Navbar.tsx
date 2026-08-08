@@ -122,7 +122,7 @@ export const Navbar: React.FC = () => {
                 MR.RAW
               </span>
               <span className="text-[9px] font-bold text-[#D4AF37] tracking-widest uppercase block mt-1">
-                LUXURY TRAVEL
+                MR.RAW TRAVEL
               </span>
             </div>
           </Link>

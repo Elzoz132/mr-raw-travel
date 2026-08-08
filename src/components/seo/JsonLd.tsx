@@ -17,7 +17,7 @@ export const JsonLd: React.FC<JsonLdProps> = ({ type, data }) => {
       name: data.title,
       description: data.description,
       image: data.image,
-      touristType: ['Luxury', 'Adventure', 'Family', 'VIP'],
+      touristType: ['Tourism', 'Adventure', 'Family', 'VIP'],
       location: {
         '@type': 'Place',
         name: data.location || 'Hurghada, Red Sea, Egypt',

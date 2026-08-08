@@ -329,7 +329,7 @@ export const CustomerDashboardClient: React.FC = () => {
                 const tripData = savedTrips.find((t) => t.id === tripId) || {
                   id: tripId,
                   titleAr: 'رحلة بحرية فاخرة الغردقة',
-                  titleEn: 'Hurghada Luxury Excursion',
+                  titleEn: 'Hurghada Excursion',
                   coverImage: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80',
                   priceAdultEgp: 2200,
                   priceAdultUsd: 45

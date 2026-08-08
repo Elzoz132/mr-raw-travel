@@ -78,7 +78,7 @@ export const PrintableVoucherModal: React.FC<PrintableVoucherModalProps> = ({ vo
               RAW
             </div>
             <div>
-              <span className="text-xs font-black uppercase tracking-widest text-[#D4AF37] block">MR. RAW LUXURY TRAVEL</span>
+              <span className="text-xs font-black uppercase tracking-widest text-[#D4AF37] block">MR.RAW TRAVEL</span>
               <h2 className="text-base font-bold text-white">تذكرة حجز فندقية ورحلة VIP</h2>
             </div>
           </div>

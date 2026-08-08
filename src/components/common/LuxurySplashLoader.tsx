@@ -69,7 +69,7 @@ export const LuxurySplashLoader: React.FC = () => {
                 MR.RAW TRAVEL
               </h1>
               <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 block">
-                Luxury Red Sea Excursions & Charters
+                Red Sea Excursions & Boat Trips
               </span>
             </motion.div>
 
@@ -87,7 +87,7 @@ export const LuxurySplashLoader: React.FC = () => {
                 />
               </div>
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                <span>PREPARING LUXURY ENGINE</span>
+                <span>PREPARING ENGINE</span>
                 <span className="font-bold text-[#D4AF37]">{progress}%</span>
               </div>
             </motion.div>

@@ -82,7 +82,7 @@ export async function sendVerificationEmail(data: { email: string; name: string;
   const htmlBody = `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #070A0F; color: #ffffff; padding: 40px 20px; border-radius: 24px; max-width: 500px; margin: 0 auto; border: 1px solid rgba(212,175,55,0.3);">
       <div style="text-align: center; margin-bottom: 25px;">
-        <h1 style="color: #D4AF37; font-size: 24px; font-weight: 900; margin: 0; letter-spacing: 2px;">MR.RAW LUXURY TRAVEL</h1>
+        <h1 style="color: #D4AF37; font-size: 24px; font-weight: 900; margin: 0; letter-spacing: 2px;">MR.RAW TRAVEL</h1>
         <p style="color: #94a3b8; font-size: 12px; margin-top: 4px;">منظومة الحجوزات والرحلات الملكية VIP</p>
       </div>
 

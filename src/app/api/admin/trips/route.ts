@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     const trips = await prisma.trip.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: 'desc' },
       include: { category: true, images: true, packages: true }
     })
@@ -30,17 +31,20 @@ export async function POST(req: Request) {
       duration, pickupTime, location, maxSeats,
       includedEn, includedAr, includedDe,
       excludedEn, excludedAr, excludedDe,
-      itineraryEn, itineraryAr, itineraryDe
+      itineraryEn, itineraryAr, itineraryDe,
+      seoTitle, seoDescription, seoKeywords, seoSlug, ogImage, isIndexed, canonicalUrl
     } = body
 
     if (!titleEn || !coverImage || !priceAdultUsd) {
       return NextResponse.json({ success: false, error: 'Title, cover image, and price are required.' }, { status: 400 })
     }
 
-    const slug = titleEn
+    const generatedSlug = titleEn
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '') + '-' + Math.floor(Math.random() * 1000)
+
+    const slug = seoSlug || generatedSlug
 
     let categoryId = body.categoryId
     if (!categoryId) {
@@ -97,7 +101,15 @@ export async function POST(req: Request) {
       itineraryDe: JSON.stringify(itineraryDe || [
         { time: '08:00 Uhr', title: 'Hotelabholung', desc: 'Fahrt im VIP-Klimabus zur Marina' },
         { time: '09:00 Uhr', title: 'Segeln & Schnorcheln', desc: 'Erster Schnorchelstopp am Korallenriff' }
-      ])
+      ]),
+      // SEO Fields
+      seoTitle: seoTitle || undefined,
+      seoDescription: seoDescription || undefined,
+      seoKeywords: seoKeywords || undefined,
+      seoSlug: seoSlug || undefined,
+      ogImage: ogImage || undefined,
+      isIndexed: isIndexed !== undefined ? Boolean(isIndexed) : true,
+      canonicalUrl: canonicalUrl || undefined
     }
 
     const newTrip = await prisma.trip.create({
@@ -141,6 +153,8 @@ export async function PUT(req: Request) {
     if (Array.isArray(updateData.itineraryAr)) updateData.itineraryAr = JSON.stringify(updateData.itineraryAr)
     if (Array.isArray(updateData.itineraryDe)) updateData.itineraryDe = JSON.stringify(updateData.itineraryDe)
 
+    if (updateData.isIndexed !== undefined) updateData.isIndexed = Boolean(updateData.isIndexed)
+
     const updatedTrip = await prisma.trip.update({
       where: { id },
       data: updateData
@@ -166,15 +180,15 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: false, error: 'ID is required.' }, { status: 400 })
     }
 
-    // Delete related child records first to satisfy foreign key constraints
-    await prisma.tripPackage.deleteMany({ where: { tripId: id } })
-    await prisma.tripImage.deleteMany({ where: { tripId: id } })
-    await prisma.tripSchedule.deleteMany({ where: { tripId: id } })
-    await prisma.review.deleteMany({ where: { tripId: id } })
-    await prisma.booking.deleteMany({ where: { tripId: id } })
-
-    // Now delete the trip itself
-    await prisma.trip.delete({ where: { id } })
+    // Soft delete trip to prevent breaking historic booking relationships
+    await prisma.trip.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        isPublished: false,
+        isIndexed: false
+      }
+    })
 
     revalidatePath('/', 'layout')
     revalidatePath('/trips', 'layout')

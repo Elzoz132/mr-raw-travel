@@ -5,7 +5,7 @@ import { useAppStore } from '@/store/useStore'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
 import { uploadMedia } from '@/lib/cloudinary'
-import { Plus, Edit3, Trash2, Upload, Sparkles, MapPin, Clock, Eye } from 'lucide-react'
+import { Plus, Edit3, Trash2, Upload, Sparkles, MapPin, Clock, Eye, Search } from 'lucide-react'
 
 interface TripItem {
   id: string
@@ -30,6 +30,13 @@ interface TripItem {
   excludedAr?: string
   itineraryEn?: string
   itineraryAr?: string
+  seoTitle?: string
+  seoDescription?: string
+  seoKeywords?: string
+  seoSlug?: string
+  ogImage?: string
+  isIndexed?: boolean
+  canonicalUrl?: string
 }
 
 interface AdminTripsClientProps {
@@ -60,7 +67,14 @@ export const AdminTripsClient: React.FC<AdminTripsClientProps> = ({ initialTrips
     priceChildEgp: 1200,
     duration: '6 Hours',
     location: 'Hurghada',
-    maxSeats: 30
+    maxSeats: 30,
+    seoTitle: '',
+    seoDescription: '',
+    seoKeywords: '',
+    seoSlug: '',
+    ogImage: '',
+    isIndexed: true,
+    canonicalUrl: ''
   })
 
   const [loading, setLoading] = useState(false)
@@ -80,40 +94,48 @@ export const AdminTripsClient: React.FC<AdminTripsClientProps> = ({ initialTrips
     }))
   }
 
+  const handleAutoGenerateSeo = () => {
+    const title = formData.titleAr || formData.titleEn || 'رحلة سياحية في الغردقة'
+    const desc = formData.descAr || formData.descEn || `احجز رحلة ${title} في الغردقة والبحر الأحمر بأفضل الأسعار المتاحة مع Mr.Raw Travel.`
+    const generatedSlug = (formData.titleEn || 'hurghada-trip')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '')
+
+    setFormData((prev) => ({
+      ...prev,
+      seoTitle: `${title} | Mr.Raw Travel الغردقة`,
+      seoDescription: desc.slice(0, 155),
+      seoKeywords: `${title}, رحلات الغردقة, سنوركلينج الغردقة, رحلات سياحية الغردقة, ${formData.titleEn || 'Hurghada excursion'}, Mr.Raw Travel`,
+      seoSlug: generatedSlug,
+      ogImage: prev.coverImage || '',
+      isIndexed: true,
+      canonicalUrl: `https://mrrawtravel.com/trips/${generatedSlug}`
+    }))
+  }
+
   const handleAutoTranslate = async () => {
-    const textToTranslate = formData.titleAr || formData.titleEn || formData.descAr || formData.descEn
-    if (!textToTranslate) return
+    if (!formData.titleAr && !formData.descAr) return
     setTranslating(true)
     try {
-      if (formData.titleAr && !formData.titleEn) {
-        const res = await fetch('/api/admin/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: formData.titleAr, from: 'ar', to: 'en' })
+      const res = await fetch('/api/admin/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titleAr: formData.titleAr,
+          descAr: formData.descAr
         })
-        const data = await res.json()
-        if (data.translated) setFormData((prev) => ({ ...prev, titleEn: data.translated }))
-      } else if (formData.titleEn && !formData.titleAr) {
-        const res = await fetch('/api/admin/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: formData.titleEn, from: 'en', to: 'ar' })
-        })
-        const data = await res.json()
-        if (data.translated) setFormData((prev) => ({ ...prev, titleAr: data.translated }))
+      })
+      const data = await res.json()
+      if (data.success) {
+        setFormData((prev) => ({
+          ...prev,
+          titleEn: data.titleEn || prev.titleEn,
+          descEn: data.descEn || prev.descEn
+        }))
       }
-
-      if (formData.descAr && !formData.descEn) {
-        const res = await fetch('/api/admin/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: formData.descAr, from: 'ar', to: 'en' })
-        })
-        const data = await res.json()
-        if (data.translated) setFormData((prev) => ({ ...prev, descEn: data.translated }))
-      }
-    } catch (err) {
-      console.error(err)
+    } catch (e) {
+      console.error(e)
     } finally {
       setTranslating(false)
     }
@@ -127,15 +149,13 @@ export const AdminTripsClient: React.FC<AdminTripsClientProps> = ({ initialTrips
       const res = await uploadMedia(file)
       setFormData((prev) => ({ ...prev, coverImage: res.url }))
     } catch (err) {
-      console.error(err)
+      alert('فشل رفع الصورة')
     } finally {
       setUploading(false)
     }
   }
 
-  const openCreateModal = () => {
-    setEditingTrip(null)
-    setIsCreating(true)
+  const handleOpenCreate = () => {
     setFormData({
       titleEn: '',
       titleAr: '',
@@ -150,285 +170,223 @@ export const AdminTripsClient: React.FC<AdminTripsClientProps> = ({ initialTrips
       priceChildEgp: 1200,
       duration: '6 Hours',
       location: 'Hurghada',
-      maxSeats: 30
+      maxSeats: 30,
+      seoTitle: '',
+      seoDescription: '',
+      seoKeywords: '',
+      seoSlug: '',
+      ogImage: '',
+      isIndexed: true,
+      canonicalUrl: ''
     })
+    setEditingTrip(null)
+    setIsCreating(true)
   }
 
-  const openEditModal = (t: TripItem) => {
-    setIsCreating(false)
-    setEditingTrip(t)
-    setFormData(t)
+  const handleEdit = (trip: TripItem) => {
+    setFormData(trip)
+    setEditingTrip(trip)
+    setIsCreating(true)
   }
 
-  const handleSaveTrip = async (e: React.FormEvent) => {
+  const handleDelete = async (id: string) => {
+    if (!confirm('هل أنت تأكد من إخفاء هذه الرحلة؟ (لن تؤثر على الحجوزات السابقة)')) return
+    try {
+      const res = await fetch(`/api/admin/trips?id=${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        setTrips((prev) => prev.filter((t) => t.id !== id))
+      } else {
+        alert(data.error || 'فشل حذف الرحلة')
+      }
+    } catch (err) {
+      alert('حدث خطأ أثناء الحذف')
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMsg('')
 
     try {
-      const url = '/api/admin/trips'
-      const method = isCreating ? 'POST' : 'PUT'
+      const endpoint = '/api/admin/trips'
+      const method = editingTrip ? 'PUT' : 'POST'
+      const payload = editingTrip ? { ...formData, id: editingTrip.id } : formData
 
-      const res = await fetch(url, {
+      const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(isCreating ? formData : { id: editingTrip?.id, ...formData })
+        body: JSON.stringify(payload)
       })
 
       const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to save excursion package.')
-      }
 
-      if (isCreating) {
-        setTrips([data.trip, ...trips])
+      if (data.success) {
+        setMsg('تم حفظ الرحلة بنجاح!')
+        if (editingTrip) {
+          setTrips((prev) => prev.map((t) => (t.id === editingTrip.id ? data.trip : t)))
+        } else {
+          setTrips((prev) => [data.trip, ...prev])
+        }
+        setTimeout(() => {
+          setIsCreating(false)
+          setEditingTrip(null)
+          setMsg('')
+        }, 1000)
       } else {
-        setTrips(trips.map((t) => (t.id === data.trip.id ? data.trip : t)))
+        setMsg(`خطأ: ${data.error}`)
       }
-
-      setIsCreating(false)
-      setEditingTrip(null)
-      setMsg(isArabic ? 'تم حفظ وتحديث الرحلة على الصفحة الرئيسية بنجاح!' : 'Excursion updated on Homepage successfully!')
-    } catch (err: any) {
-      setMsg(err.message || 'Error saving trip.')
+    } catch (err) {
+      setMsg('حدث خطأ بالسيرفر أثناء الحفظ.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDeleteTrip = async (id: string) => {
-    if (!confirm(isArabic ? 'هل أنت تأكد من حذف هذه الرحلة من الصفحة الرئيسية؟' : 'Delete excursion from homepage?')) return
-
-    try {
-      const res = await fetch(`/api/admin/trips?id=${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setTrips(trips.filter((t) => t.id !== id))
-        setMsg(isArabic ? 'تم حذف الرحلة بنجاح من الصفحة الرئيسية!' : 'Trip deleted from homepage successfully!')
-      }
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
   return (
-    <div className="pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-      
-      {/* Admin Header Navbar */}
+    <div className="space-y-8 pb-12">
       <AdminHeader />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-[#D4AF37]">
-            {isArabic ? 'إدارة رحلات الصفحة الرئيسية والموقع' : 'HOMEPAGE EXCURSIONS CMS'}
+      {/* Action Toolbar */}
+      <div className="flex items-center justify-between gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
+        <h2 className="text-lg font-black text-white flex items-center gap-2">
+          <span>قائمة الرحلات المتاحة</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] text-xs font-mono">
+            {trips.length} رحلة
           </span>
-          <h1 className="text-3xl font-black text-white">
-            {isArabic ? 'رحلات الصفحة الرئيسية (تعديل، إضافة، حذف)' : 'Homepage Excursions Manager'}
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            {isArabic
-              ? 'من هنا يمكنك إضافة رحلات جديدة تظهر في الصفحة الرئيسية للموقع، تعديل أسعارها بالجنيه والدولار، رفع صورها، أو حذف أي رحلة.'
-              : 'Add, edit, or remove excursion packages that appear on the homepage and catalog.'}
-          </p>
-        </div>
-
-        <LuxuryButton
-          onClick={openCreateModal}
-          variant="gold"
-          size="md"
-          className="flex items-center gap-2"
-        >
+        </h2>
+        <LuxuryButton onClick={handleOpenCreate} variant="gold" size="sm" className="flex items-center gap-2 font-bold">
           <Plus className="w-4 h-4" />
-          <span>{isArabic ? 'إضافة رحلة جديدة كارت بالصفحة الرئيسية' : 'Add New Homepage Trip'}</span>
+          <span>إضافة رحلة جديدة</span>
         </LuxuryButton>
       </div>
 
-      {msg && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
-          {msg}
-        </div>
-      )}
-
-      {/* Trips Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {trips.length === 0 ? (
-          <div className="col-span-full p-12 text-center glass-panel rounded-3xl space-y-4">
-            <span className="text-4xl block">⛵</span>
-            <h3 className="text-lg font-bold text-white">لا يوجد رحلات في الصفحة الرئيسية حالياً</h3>
-            <p className="text-xs text-slate-400">اضغط "إضافة رحلة جديدة كارت بالصفحة الرئيسية" لبدء إضافة رحلاتك وأسعارك.</p>
-            <button
-              onClick={openCreateModal}
-              className="px-6 py-2.5 rounded-xl gold-gradient-btn text-xs font-black text-[#0B0F17]"
-            >
-              إضافة أول رحلة الآن
-            </button>
-          </div>
-        ) : (
-          trips.map((t) => {
-            const title = isArabic ? t.titleAr : t.titleEn
-            return (
-              <div key={t.id} className="glass-panel rounded-3xl overflow-hidden flex flex-col justify-between border border-white/10 group hover:border-[#D4AF37]/40 transition-all">
-                <div className="relative h-48 w-full overflow-hidden">
-                  <img src={t.coverImage} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute top-3 right-3 bg-[#0B0F17]/90 backdrop-blur-md px-3 py-1 rounded-full border border-[#D4AF37]/40 text-xs font-black text-[#D4AF37]">
-                    {t.priceAdultEgp ? `${t.priceAdultEgp} ج.م` : `$${t.priceAdultUsd}`} / شخص
-                  </div>
-                  <div className="absolute bottom-3 left-3 bg-[#0B0F17]/80 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold text-slate-300 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-[#D4AF37]" />
-                    <span>{t.duration || '4 Hours'}</span>
-                  </div>
-                </div>
-
-                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-white line-clamp-1">{title}</h3>
-                    <p className="text-xs text-slate-400 line-clamp-2 mt-1">{isArabic ? t.descAr : t.descEn}</p>
-                  </div>
-
-                  <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                    <button
-                      onClick={() => openEditModal(t)}
-                      className="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-[#D4AF37] hover:text-[#0B0F17] font-bold text-xs flex items-center gap-1.5 transition-all"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>{isArabic ? 'تعديل الرحلة' : 'Edit Trip'}</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteTrip(t.id)}
-                      className="p-2 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition"
-                      title="حذف الرحلة من الصفحة الرئيسية"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+      {/* Trips Table / Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {trips.map((trip) => (
+          <div key={trip.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-[#D4AF37]/40 transition group flex flex-col justify-between">
+            <div className="relative h-48 w-full overflow-hidden">
+              <img src={trip.coverImage} alt={trip.titleAr || trip.titleEn} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+              <div className="absolute top-3 right-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full text-xs font-black text-[#D4AF37] border border-[#D4AF37]/40">
+                {trip.priceAdultEgp} ج.م / {trip.priceAdultUsd}$
               </div>
-            )
-          })
-        )}
-      </div>
-
-      {/* Edit / Create Modal */}
-      {(isCreating || editingTrip) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-3xl glass-panel rounded-3xl p-6 sm:p-8 border border-[#D4AF37]/40 space-y-6 my-8 max-h-[90vh] overflow-y-auto">
-            
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <h3 className="text-xl font-bold text-white border-l-4 border-[#D4AF37] pl-3">
-                {isCreating
-                  ? isArabic ? 'إضافة رحلة جديدة بالصفحة الرئيسية' : 'Add New Homepage Trip'
-                  : isArabic ? 'تعديل بيانات وأسعار الرحلة بالصفحة الرئيسية' : 'Edit Homepage Trip'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => { setIsCreating(false); setEditingTrip(null) }}
-                className="text-slate-400 hover:text-white"
-              >
-                ✕
-              </button>
             </div>
 
-            <form onSubmit={handleSaveTrip} className="space-y-4 text-xs">
+            <div className="p-5 space-y-3 flex-1">
+              <h3 className="text-base font-bold text-white line-clamp-1">{trip.titleAr || trip.titleEn}</h3>
+              <p className="text-xs text-slate-400 line-clamp-2">{trip.descAr || trip.descEn}</p>
+
+              <div className="flex items-center gap-4 text-xs font-semibold text-slate-300 pt-2 border-t border-white/5">
+                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-[#D4AF37]" /> {trip.duration}</span>
+                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-[#D4AF37]" /> {trip.location}</span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white/[0.02] border-t border-white/10 flex items-center justify-between gap-2">
+              <a href={`/trips/${trip.slug}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition">
+                <Eye className="w-4 h-4" />
+              </a>
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleEdit(trip)} className="px-3 py-1.5 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B0F17] text-xs font-bold transition flex items-center gap-1">
+                  <Edit3 className="w-3.5 h-3.5" /> تعديل
+                </button>
+                <button onClick={() => handleDelete(trip.id)} className="px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-bold transition flex items-center gap-1">
+                  <Trash2 className="w-3.5 h-3.5" /> إخفاء
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Modal Form */}
+      {isCreating && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#0D121F] border border-[#D4AF37]/30 rounded-3xl p-6 sm:p-8 max-w-4xl w-full space-y-6 max-h-[90vh] overflow-y-auto my-auto shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <h3 className="text-xl font-black text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+                {editingTrip ? 'تعديل بيانات الرحلة' : 'إضافة رحلة جديدة بالصفحة الرئيسية'}
+              </h3>
+              <button onClick={() => { setIsCreating(false); setEditingTrip(null) }} className="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+            </div>
+
+            {msg && <div className={`p-3 rounded-xl text-xs font-bold ${msg.includes('بنجاح') ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}`}>{msg}</div>}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Titles & Auto-Translate */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#D4AF37] uppercase tracking-wider block">
-                    عنوان ومسمى الرحلة (اكتب بأي لغة واضغط ترجمة تلقائية)
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleAutoTranslate}
-                    disabled={translating}
-                    className="px-3 py-1 rounded-lg bg-[#D4AF37] text-[#0B0F17] font-bold text-xs flex items-center gap-1 hover:bg-[#E5C158] transition"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{translating ? 'جاري الترجمة...' : '⚡ ترجمة تلقائية'}</span>
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-300">اسم الرحلة بالعربي *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="مثال: رحلة يخت وسنوركلينج أورانج باي"
-                      value={formData.titleAr || ''}
-                      onChange={(e) => setFormData({ ...formData, titleAr: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-300">Trip Title (EN) *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Orange Bay Yacht & Snorkeling Trip"
-                      value={formData.titleEn || ''}
-                      onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
-                    />
-                  </div>
+              {/* Cover Image Upload */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">صورة الغلاف (Cover Image)</label>
+                <div className="flex items-center gap-4">
+                  <img src={formData.coverImage} alt="Cover Preview" className="w-24 h-16 object-cover rounded-xl border border-white/10" />
+                  <label className="px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 text-xs font-bold text-white cursor-pointer transition flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-[#D4AF37]" />
+                    <span>{uploading ? 'جاري الرفع...' : 'تغيير الصورة'}</span>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  </label>
                 </div>
               </div>
 
-              {/* Cover Image Upload & URL */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
-                <span className="font-bold text-[#D4AF37] uppercase tracking-wider block">صورة غلاف الرحلة الرئيسي</span>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="w-32 h-20 rounded-xl overflow-hidden border border-white/15 flex-shrink-0 bg-black/40">
-                    {formData.coverImage ? (
-                      <img src={formData.coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-500">لا يوجد صورة</div>
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-2 w-full">
-                    <label className="px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer hover:bg-emerald-600 transition w-full sm:w-auto inline-flex">
-                      <Upload className="w-4 h-4" />
-                      <span>{uploading ? 'جاري رفع الصورة...' : 'رفع صورة من الجهاز'}</span>
-                      <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="أو ضع رابط الصورة المباشر هنا"
-                      value={formData.coverImage || ''}
-                      onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Descriptions */}
+              {/* Basic Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-300">وصف الرحلة بالعربي</label>
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">اسم الرحلة بالعربية *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="مثال: رحلة سنوركلينج أورنج باي VIP"
+                    value={formData.titleAr || ''}
+                    onChange={(e) => setFormData({ ...formData, titleAr: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-300 block">اسم الرحلة بالإنجليزي *</label>
+                    <button type="button" onClick={handleAutoTranslate} className="text-[10px] text-[#D4AF37] font-bold hover:underline flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> ترجمة تلقائية
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Orange Bay Snorkeling & Sea Trip"
+                    value={formData.titleEn || ''}
+                    onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">الوصف بالعربية</label>
                   <textarea
                     rows={3}
-                    placeholder="اكتب نبذة عن الرحلة وما يميزها..."
+                    placeholder="وصف تفصيلي للرحلة..."
                     value={formData.descAr || ''}
                     onChange={(e) => setFormData({ ...formData, descAr: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-300">Description (EN)</label>
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">الوصف بالإنجليزي</label>
                   <textarea
                     rows={3}
-                    placeholder="Write a brief overview of the excursion..."
+                    placeholder="English description..."
                     value={formData.descEn || ''}
                     onChange={(e) => setFormData({ ...formData, descEn: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
                   />
                 </div>
               </div>
 
-              {/* Prices Grid */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-4">
+              {/* Pricing Section */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/10 pb-2">
-                  <span className="font-bold text-[#D4AF37] uppercase tracking-wider block">أسعار الرحلة (أسعار البالغين والأطفال بالعملات المختلفة)</span>
+                  <span className="font-bold text-[#D4AF37] uppercase tracking-wider block text-xs">أسعار الرحلة (بالعملات المختلفة)</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -525,35 +483,134 @@ export const AdminTripsClient: React.FC<AdminTripsClientProps> = ({ initialTrips
                 </div>
               </div>
 
+              {/* SEO Controls Section */}
+              <div className="p-4 rounded-2xl bg-[#0B0F17] border border-[#D4AF37]/40 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <span className="font-bold text-[#D4AF37] uppercase tracking-wider block text-xs flex items-center gap-1.5">
+                    <Search className="w-4 h-4 text-[#D4AF37]" />
+                    <span>إعدادات تحسين محركات البحث (SEO Settings)</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleAutoGenerateSeo}
+                    className="px-3 py-1 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B0F17] text-xs font-bold transition flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>⚡ توليد SEO تلقائياً</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">عنوان الـ SEO (SEO Title)</label>
+                    <input
+                      type="text"
+                      placeholder="عنوان الصفحة لمحركات البحث..."
+                      value={formData.seoTitle || ''}
+                      onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">الرابط الدائم المخصص (SEO Slug)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. orange-bay-hurghada"
+                      value={formData.seoSlug || ''}
+                      onChange={(e) => setFormData({ ...formData, seoSlug: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">وصف الميتا (Meta Description)</label>
+                  <textarea
+                    rows={2}
+                    placeholder="وصف مختصر ومحفز يظهر في نتائج بحث جوجل (حتى 160 حرف)..."
+                    value={formData.seoDescription || ''}
+                    onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">الكلمات المفتاحية (SEO Keywords)</label>
+                    <input
+                      type="text"
+                      placeholder="مفصولة بفاصلة: رحلات الغردقة, سنوركلينج, Orange Bay..."
+                      value={formData.seoKeywords || ''}
+                      onChange={(e) => setFormData({ ...formData, seoKeywords: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">رابط الصورة للمشاركة (OG Image URL)</label>
+                    <input
+                      type="text"
+                      placeholder="رابط الصورة التي تظهر عند مشاركة الرابط..."
+                      value={formData.ogImage || ''}
+                      onChange={(e) => setFormData({ ...formData, ogImage: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">رابط Canonical URL</label>
+                    <input
+                      type="text"
+                      placeholder="https://mrrawtravel.com/trips/orange-bay-hurghada"
+                      value={formData.canonicalUrl || ''}
+                      onChange={(e) => setFormData({ ...formData, canonicalUrl: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3 pt-4">
+                    <label className="text-xs font-bold text-slate-300 cursor-pointer flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.isIndexed !== false}
+                        onChange={(e) => setFormData({ ...formData, isIndexed: e.target.checked })}
+                        className="w-4 h-4 rounded border-white/20 bg-white/10 text-[#D4AF37] focus:ring-0"
+                      />
+                      <span>السماح لمحركات البحث بفهرسة هذه الرحلة (Index / Allow in Search)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               {/* Trip Logistics */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-slate-300 font-bold block mb-1">مدة الرحلة (Duration)</label>
+                  <label className="text-slate-300 font-bold block mb-1 text-xs">مدة الرحلة (Duration)</label>
                   <input
                     type="text"
                     placeholder="مثال: 6 Hours"
                     value={formData.duration || ''}
                     onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-300 font-bold block mb-1">المكان (Location)</label>
+                  <label className="text-slate-300 font-bold block mb-1 text-xs">المكان (Location)</label>
                   <input
                     type="text"
                     placeholder="Hurghada"
                     value={formData.location || ''}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-300 font-bold block mb-1">عدد المقاعد</label>
+                  <label className="text-slate-300 font-bold block mb-1 text-xs">عدد المقاعد</label>
                   <input
                     type="number"
                     value={formData.maxSeats || 30}
                     onChange={(e) => setFormData({ ...formData, maxSeats: parseInt(e.target.value, 10) })}
-                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs"
                   />
                 </div>
               </div>

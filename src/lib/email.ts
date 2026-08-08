@@ -35,7 +35,7 @@ export function generateBookingConfirmationHtml(details: EmailBookingDetails): s
       <div class="container">
         <div class="header">
           <div class="brand">Mr.Raw Travel</div>
-          <div class="tagline">Luxury Hurghada Excursions</div>
+          <div class="tagline">Hurghada Excursions & Boat Trips</div>
           <div class="badge">BOOKING CONFIRMED & RESERVED</div>
         </div>
         

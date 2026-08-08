@@ -45,7 +45,7 @@ export function renderEmailLayout(title: string, contentHtml: string, branding?:
           👑 ${brand.companyName}
         </h1>
         <p style="margin: 6px 0 0 0; color: #94A3B8; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;">
-          Luxury Excursions & Yacht Charters
+          Red Sea Excursions & Boat Trips
         </p>
       </td>
     </tr>
@@ -61,7 +61,7 @@ export function renderEmailLayout(title: string, contentHtml: string, branding?:
     <!-- Footer -->
     <tr>
       <td align="center" style="padding: 24px; background-color: #0B0F17; border-top: 1px solid ${brand.primaryColor}20; font-size: 12px; color: #64748B; line-height: 1.6;">
-        <p style="margin: 0 0 8px 0; color: #94A3B8; font-weight: bold;">${brand.companyName} — Red Sea Luxury Travel</p>
+        <p style="margin: 0 0 8px 0; color: #94A3B8; font-weight: bold;">${brand.companyName} — Red Sea Excursions & Travel</p>
         <p style="margin: 0 0 8px 0;">📍 ${brand.companyAddress} | 📞 ${brand.companyPhone}</p>
         <p style="margin: 0 0 12px 0;">✉️ ${brand.companyEmail}</p>
         <div style="margin-top: 12px;">
@@ -82,14 +82,14 @@ export function renderEmailLayout(title: string, contentHtml: string, branding?:
 export function getWelcomeEmailHtml(name: string, branding?: EmailBrandingConfig): string {
   const content = `
     <p style="color: #CBD5E1; font-size: 14px; line-height: 1.6;">
-      Thank you for registering with <strong>MR.RAW Travel</strong>. We are thrilled to welcome you to Egypt’s premier VIP excursions and luxury yacht charter platform in Hurghada.
+      Thank you for registering with <strong>MR.RAW Travel</strong>. We are thrilled to welcome you to Egypt’s premier VIP excursions and yacht charter platform in Hurghada.
     </p>
     <p style="color: #CBD5E1; font-size: 14px; line-height: 1.6;">
       Your account gives you instant access to exclusive VIP discounts, fast-track booking, private vouchers, and 24/7 dedicated travel concierges.
     </p>
     <div style="text-align: center; margin: 28px 0;">
       <a href="https://mrrawtravel.com/trips" style="background-color: ${branding?.primaryColor || '#D4AF37'}; color: #0B0F17; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
-        Explore Luxury Trips →
+        Explore Excursions →
       </a>
     </div>
   `

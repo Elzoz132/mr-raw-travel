@@ -137,6 +137,16 @@ model Trip {
 
   coverImage      String
   isPublished     Boolean        @default(true)
+  
+  // Custom SEO Fields
+  seoTitle        String?
+  seoDescription  String?
+  seoKeywords     String?
+  seoSlug         String?
+  ogImage         String?
+  isIndexed       Boolean        @default(true)
+  canonicalUrl    String?
+
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   deletedAt       DateTime?

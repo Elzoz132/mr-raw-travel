@@ -85,7 +85,7 @@ export async function sendEmail({ to, subject, templateKey, props = {}, html: cu
 
   switch (templateKey) {
     case 'WELCOME':
-      if (!subject) defaultSubject = `Welcome to MR.RAW Luxury Travel, ${props.name}! 👑`
+      if (!subject) defaultSubject = `Welcome to MR.RAW Travel, ${props.name}! 👑`
       html = getWelcomeEmailHtml(props.name, branding)
       break
     case 'VERIFY_EMAIL':

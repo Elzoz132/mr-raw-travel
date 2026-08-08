@@ -45,7 +45,7 @@ export async function createInAppNotification(params: InAppNotificationParams): 
             <a href="https://www.mrrawtravel.com${params.link || '/customer'}" style="background-color: #D4AF37; color: #0B0F17; font-weight: bold; text-decoration: none; padding: 12px 24px; border-radius: 8px; display: inline-block;">عرض التفاصيل في حسابك</a>
           </div>
           <hr style="border-color: rgba(255,255,255,0.1); margin-top: 40px;" />
-          <p style="font-size: 12px; color: #94a3b8; text-align: center;">Mr.Raw Travel - Luxury Tourism & Excursions Hurghada</p>
+          <p style="font-size: 12px; color: #94a3b8; text-align: center;">Mr.Raw Travel - Tourism & Excursions Hurghada</p>
         </div>
       `
     })
