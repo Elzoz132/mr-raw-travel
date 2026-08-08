@@ -850,52 +850,120 @@ export const AdminPackagesClient: React.FC = () => {
                 </div>
 
                 {/* Multi-Currency Pricing Inputs */}
-                <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/10 pb-2">
                     <span className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider block">
-                      أسعار الباقة (ادخل السعر بالجنيه المصري ليتم التحويل تلقائياً)
+                      أسعار الباقة (أسعار البالغين والأطفال بكافة العملات)
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const adultEgp = editingPkg.priceAdultEgp || 0
+                        const adultUsd = editingPkg.priceAdultUsd || Math.round(adultEgp / 48)
+                        const adultEur = editingPkg.priceAdultEur || Math.round(adultEgp / 52)
+                        const adultGbp = editingPkg.priceAdultGbp || Math.round(adultEgp / 60)
+                        setEditingPkg({
+                          ...editingPkg,
+                          priceChildEgp: Math.round(adultEgp * 0.5),
+                          priceChildUsd: Math.round(adultUsd * 0.5),
+                          priceChildEur: Math.round(adultEur * 0.5),
+                          priceChildGbp: Math.round(adultGbp * 0.5)
+                        })
+                      }}
+                      className="px-3 py-1 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B0F17] text-xs font-bold transition flex items-center gap-1"
+                    >
+                      <span>⚡ احتساب سعر الأطفال تلقائياً (50%)</span>
+                    </button>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                    <div>
-                      <label className="text-slate-400 block mb-1">السعر بالجنيه (EGP) *</label>
-                      <input
-                        type="number"
-                        required
-                        placeholder="800"
-                        value={editingPkg.priceAdultEgp || 0}
-                        onChange={(e) => handleEgpPriceChange(Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-[#D4AF37] text-white font-black text-emerald-400 text-sm"
-                      />
+
+                  {/* Adult Prices */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-extrabold text-slate-300 block">👨‍👩‍👦 أسعار البالغين (Adult Prices):</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      <div>
+                        <label className="text-[#D4AF37] font-bold block mb-1">السعر بالجنيه (Adult EGP) *</label>
+                        <input
+                          type="number"
+                          required
+                          placeholder="800"
+                          value={editingPkg.priceAdultEgp || 0}
+                          onChange={(e) => handleEgpPriceChange(Number(e.target.value))}
+                          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-[#D4AF37] text-white font-black text-emerald-400 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-slate-400 block mb-1">Adult USD ($)</label>
+                        <input
+                          type="number"
+                          required
+                          value={editingPkg.priceAdultUsd || 0}
+                          onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultUsd: Number(e.target.value) })}
+                          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-slate-400 block mb-1">Adult EUR (€)</label>
+                        <input
+                          type="number"
+                          required
+                          value={editingPkg.priceAdultEur || 0}
+                          onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultEur: Number(e.target.value) })}
+                          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-slate-400 block mb-1">Adult GBP (£)</label>
+                        <input
+                          type="number"
+                          value={editingPkg.priceAdultGbp || 0}
+                          onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultGbp: Number(e.target.value) })}
+                          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1">Adult USD ($)</label>
-                      <input
-                        type="number"
-                        required
-                        value={editingPkg.priceAdultUsd || 0}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultUsd: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1">Adult EUR (€)</label>
-                      <input
-                        type="number"
-                        required
-                        value={editingPkg.priceAdultEur || 0}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultEur: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-slate-400 block mb-1">Adult GBP (£)</label>
-                      <input
-                        type="number"
-                        value={editingPkg.priceAdultGbp || 0}
-                        onChange={(e) => setEditingPkg({ ...editingPkg, priceAdultGbp: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
-                      />
+                  </div>
+
+                  {/* Child Prices */}
+                  <div className="space-y-2 pt-2 border-t border-white/5">
+                    <span className="text-xs font-extrabold text-amber-400 block">👶 أسعار الأطفال (Child Prices):</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      <div>
+                        <label className="text-amber-400 font-bold block mb-1">سعر الطفل بالجنيه (Child EGP)</label>
+                        <input
+                          type="number"
+                          placeholder="400"
+                          value={editingPkg.priceChildEgp || 0}
+                          onChange={(e) => setEditingPkg({ ...editingPkg, priceChildEgp: Number(e.target.value) })}
+                          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-amber-500/40 text-amber-300 font-bold text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-slate-400 block mb-1">Child USD ($)</label>
+                        <input
+                          type="number"
+                          value={editingPkg.priceChildUsd || 0}
+                          onChange={(e) => setEditingPkg({ ...editingPkg, priceChildUsd: Number(e.target.value) })}
+                          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-slate-400 block mb-1">Child EUR (€)</label>
+                        <input
+                          type="number"
+                          value={editingPkg.priceChildEur || 0}
+                          onChange={(e) => setEditingPkg({ ...editingPkg, priceChildEur: Number(e.target.value) })}
+                          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-slate-400 block mb-1">Child GBP (£)</label>
+                        <input
+                          type="number"
+                          value={editingPkg.priceChildGbp || 0}
+                          onChange={(e) => setEditingPkg({ ...editingPkg, priceChildGbp: Number(e.target.value) })}
+                          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

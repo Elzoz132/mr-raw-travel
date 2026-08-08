@@ -426,47 +426,101 @@ export const AdminTripsClient: React.FC<AdminTripsClientProps> = ({ initialTrips
               </div>
 
               {/* Prices Grid */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
-                <span className="font-bold text-[#D4AF37] uppercase tracking-wider block">أسعار الرحلة (ادخل السعر بالجنيه ليتم التحويل تلقائياً)</span>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/10 pb-2">
+                  <span className="font-bold text-[#D4AF37] uppercase tracking-wider block">أسعار الرحلة (أسعار البالغين والأطفال بالعملات المختلفة)</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const adultEgp = formData.priceAdultEgp || 0
+                      const adultUsd = formData.priceAdultUsd || Math.round(adultEgp / 48.5)
+                      const adultEur = formData.priceAdultEur || Math.round(adultUsd * 0.92)
+                      setFormData({
+                        ...formData,
+                        priceChildEgp: Math.round(adultEgp * 0.5),
+                        priceChildUsd: Math.round(adultUsd * 0.5),
+                        priceChildEur: Math.round(adultEur * 0.5)
+                      })
+                    }}
+                    className="px-3 py-1 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0B0F17] text-xs font-bold transition flex items-center gap-1"
+                  >
+                    <span>⚡ احتساب سعر الأطفال تلقائياً (50%)</span>
+                  </button>
+                </div>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div>
-                    <label className="text-[#D4AF37] font-bold block mb-1">السعر بالجنيه (EGP) *</label>
-                    <input
-                      type="number"
-                      required
-                      placeholder="2200"
-                      value={formData.priceAdultEgp || 0}
-                      onChange={(e) => handleEgpPriceChange(parseFloat(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-[#D4AF37] text-white font-black text-emerald-400 text-sm"
-                    />
+                {/* Adult Prices Section */}
+                <div className="space-y-2">
+                  <span className="text-xs font-extrabold text-slate-300 flex items-center gap-1">
+                    <span>👨‍👩‍👦 أسعار البالغين (Adult Prices):</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-[#D4AF37] font-bold block mb-1 text-xs">سعر البالغ بالجنيه (EGP) *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="2200"
+                        value={formData.priceAdultEgp || 0}
+                        onChange={(e) => handleEgpPriceChange(parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-[#D4AF37] text-white font-black text-emerald-400 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 block mb-1 text-xs">سعر البالغ بالدولار (Adult USD $)</label>
+                      <input
+                        type="number"
+                        value={formData.priceAdultUsd || 0}
+                        onChange={(e) => setFormData({ ...formData, priceAdultUsd: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 block mb-1 text-xs">سعر البالغ باليورو (Adult EUR €)</label>
+                      <input
+                        type="number"
+                        value={formData.priceAdultEur || 0}
+                        onChange={(e) => setFormData({ ...formData, priceAdultEur: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold text-sm"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">Adult USD ($)</label>
-                    <input
-                      type="number"
-                      value={formData.priceAdultUsd || 0}
-                      onChange={(e) => setFormData({ ...formData, priceAdultUsd: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">Adult EUR (€)</label>
-                    <input
-                      type="number"
-                      value={formData.priceAdultEur || 0}
-                      onChange={(e) => setFormData({ ...formData, priceAdultEur: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">Child EGP (ج.م)</label>
-                    <input
-                      type="number"
-                      value={formData.priceChildEgp || 0}
-                      onChange={(e) => setFormData({ ...formData, priceChildEgp: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
-                    />
+                </div>
+
+                {/* Child Prices Section */}
+                <div className="space-y-2 pt-2 border-t border-white/5">
+                  <span className="text-xs font-extrabold text-amber-400 flex items-center gap-1">
+                    <span>👶 أسعار الأطفال (Child Prices):</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-amber-400 font-bold block mb-1 text-xs">سعر الطفل بالجنيه (Child EGP - ج.م) *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="1100"
+                        value={formData.priceChildEgp || 0}
+                        onChange={(e) => setFormData({ ...formData, priceChildEgp: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-amber-500/40 text-amber-300 font-bold text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 block mb-1 text-xs">سعر الطفل بالدولار (Child USD $)</label>
+                      <input
+                        type="number"
+                        value={formData.priceChildUsd || 0}
+                        onChange={(e) => setFormData({ ...formData, priceChildUsd: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-slate-400 block mb-1 text-xs">سعر الطفل باليورو (Child EUR €)</label>
+                      <input
+                        type="number"
+                        value={formData.priceChildEur || 0}
+                        onChange={(e) => setFormData({ ...formData, priceChildEur: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white font-bold text-sm"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

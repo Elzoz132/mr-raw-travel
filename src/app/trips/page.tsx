@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/db'
-import { ensureDefaultTripsAndPackagesExist } from '@/lib/seedHelper'
 import { PopularTrips } from '@/components/home/PopularTrips'
 import { CustomPackageBuilder } from '@/components/trip/CustomPackageBuilder'
 import { JsonLd } from '@/components/seo/JsonLd'
@@ -16,8 +15,6 @@ export default async function TripsCatalogPage({ searchParams }: TripsPageProps)
   let trips: any[] = []
 
   try {
-    await ensureDefaultTripsAndPackagesExist()
-
     const whereCondition: any = {}
     if (category && category !== 'all') {
       whereCondition.category = { slug: category }
