@@ -12,10 +12,10 @@ export async function GET(req: Request) {
     }, { status: 400 })
   }
 
-  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'mr-raw-travel.vercel.app'
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'mrrawtravel.com'
   const protoHeader = req.headers.get('x-forwarded-proto')
   const protocol = protoHeader ? protoHeader : (host.includes('localhost') ? 'http' : 'https')
-  const baseUrl = process.env.AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
+  const baseUrl = process.env.AUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
   
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${baseUrl.replace(/\/$/, '')}/api/auth/callback/google`
 

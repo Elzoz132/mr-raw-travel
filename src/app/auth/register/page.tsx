@@ -25,6 +25,17 @@ export default function RegisterPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
+  React.useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          window.location.href = '/'
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   const strength = evaluatePasswordStrength(formData.password)
 
   const handleChange = (field: string, val: any) => {

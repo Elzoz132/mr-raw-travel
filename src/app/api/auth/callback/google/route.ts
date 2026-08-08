@@ -14,14 +14,15 @@ const ADMIN_EMAILS = [
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
-  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'mr-raw-travel.vercel.app'
+  
+  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'mrrawtravel.com'
   const protoHeader = req.headers.get('x-forwarded-proto')
   const protocol = protoHeader ? protoHeader : (host.includes('localhost') ? 'http' : 'https')
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`
+  const baseUrl = process.env.AUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${baseUrl.replace(/\/$/, '')}/api/auth/callback/google`
 
   if (!code) {
-    return NextResponse.redirect(`${protocol}://${host}?auth_error=no_code`)
+    return NextResponse.redirect(`${baseUrl}?auth_error=no_code`)
   }
 
   try {
@@ -29,7 +30,7 @@ export async function GET(req: Request) {
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
     if (!clientId || !clientSecret) {
-      return NextResponse.redirect(`${protocol}://${host}?auth_error=missing_credentials`)
+      return NextResponse.redirect(`${baseUrl}?auth_error=missing_credentials`)
     }
 
     // 1. Exchange OAuth code for Google access token
@@ -48,7 +49,7 @@ export async function GET(req: Request) {
     const tokenData = await tokenRes.json()
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error('Google token exchange failed:', tokenData)
-      return NextResponse.redirect(`${protocol}://${host}?auth_error=token_failed`)
+      return NextResponse.redirect(`${baseUrl}?auth_error=token_failed`)
     }
 
     // 2. Fetch authenticated Google User Profile
@@ -58,7 +59,7 @@ export async function GET(req: Request) {
 
     const googleUser = await userRes.json()
     if (!googleUser.email) {
-      return NextResponse.redirect(`${protocol}://${host}?auth_error=no_email`)
+      return NextResponse.redirect(`${baseUrl}?auth_error=no_email`)
     }
 
     const cleanEmail = googleUser.email.toLowerCase().trim()
@@ -81,7 +82,7 @@ export async function GET(req: Request) {
             password: 'google_oauth_authenticated',
             role: targetRole,
             avatar: googleUser.picture || null,
-            country: 'Germany'
+            country: 'Egypt'
           }
         })
 
@@ -104,7 +105,6 @@ export async function GET(req: Request) {
       }
     } catch (dbErr) {
       console.error('Database connection glitch during Google Auth:', dbErr)
-      // Fallback object ensuring Google OAuth NEVER fails
       user = {
         id: `google_${cleanEmail}`,
         name: googleUser.name || cleanEmail.split('@')[0],
@@ -116,24 +116,28 @@ export async function GET(req: Request) {
 
     // 4. Set Session Cookies
     const cookieStore = await cookies()
-    cookieStore.set('user_session', JSON.stringify({
+    const sessionData = JSON.stringify({
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
       avatar: user.avatar
-    }), {
+    })
+
+    cookieStore.set('user_session', sessionData, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7
+      maxAge: 60 * 60 * 24 * 30
     })
 
     cookieStore.set('user_role', user.role || 'CUSTOMER', {
       httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7
+      maxAge: 60 * 60 * 24 * 30
     })
 
     // 5. If ADMIN, set Executive Admin Session cookie and redirect to Admin Dashboard
@@ -145,14 +149,14 @@ export async function GET(req: Request) {
         path: '/',
         maxAge: 60 * 60 * 24 * 7
       })
-      return NextResponse.redirect(`${protocol}://${host}/admin/dashboard`)
+      return NextResponse.redirect(`${baseUrl}/admin/dashboard`)
     }
 
-    // Customer redirect to customer settings/dashboard
-    return NextResponse.redirect(`${protocol}://${host}/customer`)
+    // Customer redirect: Return to homepage directly logged in!
+    return NextResponse.redirect(`${baseUrl}/?auth=success`)
 
   } catch (err: any) {
     console.error('Google OAuth critical callback error:', err)
-    return NextResponse.redirect(`${protocol}://${host}/customer`)
+    return NextResponse.redirect(`${baseUrl}/?auth=error`)
   }
 }
