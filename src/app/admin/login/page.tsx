@@ -1,13 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { LuxuryButton } from '@/components/ui/LuxuryButton'
-import { Lock, Shield, ArrowLeft } from 'lucide-react'
+import { Lock, Shield, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 
 export default function AdminLoginPage() {
-  const router = useRouter()
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -28,26 +27,26 @@ export default function AdminLoginPage() {
         throw new Error(data.error || 'كلمة السر غير صحيحة')
       }
 
-      router.push('/admin/dashboard')
+      // Hard redirect to commit session cookies cleanly
+      window.location.href = '/admin/dashboard'
     } catch (err: any) {
       setError(err.message || 'فشل تسجيل الدخول كإدارة.')
-    } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20 px-4 flex items-center justify-center">
+    <div className="min-h-screen pt-28 pb-20 px-4 flex items-center justify-center bg-[#0B0F17]">
       <div className="w-full max-w-md glass-panel rounded-3xl p-8 border border-[#D4AF37]/40 shadow-2xl space-y-6">
         
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center mx-auto mb-2">
-            <Lock className="w-6 h-6" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] text-[#0B0F17] flex items-center justify-center mx-auto mb-2 shadow-lg">
+            <Lock className="w-7 h-7" />
           </div>
           <span className="text-xs font-bold uppercase tracking-widest text-[#D4AF37]">
             بوابة الإدارة التنفيذية العليا
           </span>
-          <h1 className="text-2xl font-black text-white">
+          <h1 className="text-2xl font-black text-white tracking-tight">
             تسجيل دخول السوبر أدمن
           </h1>
           <p className="text-xs text-slate-400">
@@ -56,21 +55,31 @@ export default function AdminLoginPage() {
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4 text-xs">
+        <form onSubmit={handleLogin} className="space-y-5 text-xs">
           <div className="space-y-1.5">
-            <label className="font-bold text-slate-300">كلمة سر الإدارة (Admin Password)</label>
-            <input
-              type="password"
-              placeholder="أدخل كلمة السر (الافتراضية: admin123)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37] text-right"
-            />
+            <label className="font-bold text-slate-300 block">كلمة سر الإدارة (Admin Password)</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                placeholder="أدخل كلمة السر..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-white/5 border border-white/15 text-white focus:outline-none focus:border-[#D4AF37] text-right font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <LuxuryButton
@@ -78,7 +87,7 @@ export default function AdminLoginPage() {
             disabled={loading}
             variant="gold"
             size="lg"
-            className="w-full font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+            className="w-full font-bold uppercase tracking-wider flex items-center justify-center gap-2 py-3.5"
           >
             <span>{loading ? 'جاري التحقق من الصلاحيات...' : 'دخول لوحة التحكم الإدارية'}</span>
             <ArrowLeft className="w-4 h-4" />

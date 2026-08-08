@@ -4,7 +4,25 @@ import React, { useState, useEffect } from 'react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { useAppStore } from '@/store/useStore'
 import { DEFAULT_ROLE_PERMISSIONS, UserRole, Resource } from '@/lib/permissions'
-import { Shield, Check, Save, Users, Search, UserCheck, Lock, AlertCircle, Plus, UserPlus, RefreshCw, Key } from 'lucide-react'
+import { 
+  Shield, 
+  Check, 
+  Save, 
+  Users, 
+  Search, 
+  UserCheck, 
+  Lock, 
+  AlertCircle, 
+  UserPlus, 
+  RefreshCw, 
+  Key, 
+  Plus, 
+  Trash2, 
+  Edit3, 
+  Eye, 
+  EyeOff, 
+  Copy 
+} from 'lucide-react'
 
 const RESOURCES: Resource[] = [
   'TRIPS',
@@ -36,8 +54,8 @@ export const AdminPermissionsClient: React.FC = () => {
   const { language } = useAppStore()
   const isArabic = language === 'ar'
 
-  // Tab State: 'USERS_ASSIGNMENT' or 'ROLE_MATRIX'
-  const [activeTab, setActiveTab] = useState<'USERS_ASSIGNMENT' | 'ROLE_MATRIX'>('USERS_ASSIGNMENT')
+  // Tab State: 'USERS_ASSIGNMENT' | 'ROLE_MATRIX' | 'ADMIN_PASSWORDS'
+  const [activeTab, setActiveTab] = useState<'USERS_ASSIGNMENT' | 'ROLE_MATRIX' | 'ADMIN_PASSWORDS'>('USERS_ASSIGNMENT')
 
   // Matrix State
   const [selectedRole, setSelectedRole] = useState<UserRole>('ADMIN')
@@ -51,6 +69,14 @@ export const AdminPermissionsClient: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('ALL')
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
   
+  // Admin Passwords State
+  const [adminPasswords, setAdminPasswords] = useState<string[]>([])
+  const [loadingPasswords, setLoadingPasswords] = useState(false)
+  const [showPassMap, setShowPassMap] = useState<Record<string, boolean>>({})
+  const [newPassInput, setNewPassInput] = useState('')
+  const [editingPass, setEditingPass] = useState<{ oldPass: string; newPass: string } | null>(null)
+  const [savingPass, setSavingPass] = useState(false)
+
   // Global Toast Messages
   const [statusMsg, setStatusMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
@@ -66,7 +92,7 @@ export const AdminPermissionsClient: React.FC = () => {
   })
   const [addingStaff, setAddingStaff] = useState(false)
 
-  // 1. Load All Users from API
+  // 1. Load All Users
   const fetchUsers = async () => {
     setLoadingUsers(true)
     try {
@@ -84,11 +110,28 @@ export const AdminPermissionsClient: React.FC = () => {
     }
   }
 
+  // 2. Load Admin Passwords
+  const fetchAdminPasswords = async () => {
+    setLoadingPasswords(true)
+    try {
+      const res = await fetch('/api/admin/passwords')
+      const data = await res.json()
+      if (data.success && Array.isArray(data.passwords)) {
+        setAdminPasswords(data.passwords)
+      }
+    } catch (err: any) {
+      console.error('Error loading admin passwords:', err)
+    } finally {
+      setLoadingPasswords(false)
+    }
+  }
+
   useEffect(() => {
     fetchUsers()
+    fetchAdminPasswords()
   }, [])
 
-  // 2. Handle Changing a User's Role
+  // Handle User Role Change
   const handleUserRoleChange = async (userId: string, newRole: UserRole) => {
     setUpdatingUserId(userId)
     setErrorMsg('')
@@ -122,7 +165,7 @@ export const AdminPermissionsClient: React.FC = () => {
     }
   }
 
-  // 3. Handle Adding a New Admin/Staff Member
+  // Handle Adding New Staff
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newStaff.name || !newStaff.email) return
@@ -159,7 +202,104 @@ export const AdminPermissionsClient: React.FC = () => {
     }
   }
 
-  // 4. Matrix Toggle Logic
+  // Handle Adding New Admin Password
+  const handleAddPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newPassInput.trim()) return
+
+    setSavingPass(true)
+    setErrorMsg('')
+    setStatusMsg('')
+
+    try {
+      const res = await fetch('/api/admin/passwords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: newPassInput.trim() })
+      })
+
+      const data = await res.json()
+      if (data.success && Array.isArray(data.passwords)) {
+        setAdminPasswords(data.passwords)
+        setNewPassInput('')
+        setStatusMsg(isArabic ? 'تم إضافة كلمة السر الجديدة بنجاح!' : 'New admin password added successfully!')
+        setTimeout(() => setStatusMsg(''), 4000)
+      } else {
+        setErrorMsg(data.error || 'Failed to add password.')
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Error adding password.')
+    } finally {
+      setSavingPass(false)
+    }
+  }
+
+  // Handle Updating Existing Admin Password
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingPass || !editingPass.newPass.trim()) return
+
+    setSavingPass(true)
+    setErrorMsg('')
+    setStatusMsg('')
+
+    try {
+      const res = await fetch('/api/admin/passwords', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPassword: editingPass.oldPass, newPassword: editingPass.newPass.trim() })
+      })
+
+      const data = await res.json()
+      if (data.success && Array.isArray(data.passwords)) {
+        setAdminPasswords(data.passwords)
+        setEditingPass(null)
+        setStatusMsg(isArabic ? 'تم تعديل كلمة السر بنجاح!' : 'Admin password updated successfully!')
+        setTimeout(() => setStatusMsg(''), 4000)
+      } else {
+        setErrorMsg(data.error || 'Failed to update password.')
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Error updating password.')
+    } finally {
+      setSavingPass(false)
+    }
+  }
+
+  // Handle Deleting Admin Password
+  const handleDeletePassword = async (targetPass: string) => {
+    if (adminPasswords.length <= 1) {
+      setErrorMsg(isArabic ? 'لا يمكن حذف كلمة السر الوحيدة المتبقية للإدارة!' : 'Cannot delete the last remaining admin password.')
+      return
+    }
+
+    if (!confirm(isArabic ? `هل أنت تأكد من حذف كلمة السر هذه؟` : `Are you sure you want to delete this password?`)) return
+
+    setSavingPass(true)
+    setErrorMsg('')
+    setStatusMsg('')
+
+    try {
+      const res = await fetch(`/api/admin/passwords?password=${encodeURIComponent(targetPass)}`, {
+        method: 'DELETE'
+      })
+
+      const data = await res.json()
+      if (data.success && Array.isArray(data.passwords)) {
+        setAdminPasswords(data.passwords)
+        setStatusMsg(isArabic ? 'تم حذف كلمة السر بنجاح!' : 'Admin password deleted successfully!')
+        setTimeout(() => setStatusMsg(''), 4000)
+      } else {
+        setErrorMsg(data.error || 'Failed to delete password.')
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Error deleting password.')
+    } finally {
+      setSavingPass(false)
+    }
+  }
+
+  // Matrix Toggle Logic
   const handleToggleMatrix = (resource: Resource, action: 'canView' | 'canCreate' | 'canEdit' | 'canDelete' | 'canApprove') => {
     if (selectedRole === 'SUPER_ADMIN') return
 
@@ -202,15 +342,15 @@ export const AdminPermissionsClient: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-bold uppercase tracking-wider mb-2">
               <Shield className="w-3.5 h-3.5" />
-              {isArabic ? 'إدارة الصلاحيات والمشرفين (RBAC & User Access)' : 'Enterprise User Access & Role Permissions'}
+              {isArabic ? 'إدارة الصلاحيات وكلمات السر (RBAC & Passwords)' : 'Enterprise User Access & Admin Passwords'}
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight">
-              {isArabic ? 'تعيين الصلاحيات والأدوار للمستخدمين' : 'User Role Management & Permissions'}
+              {isArabic ? 'تعديل كلمات سر الأدمن وصلاحيات المستخدمين' : 'User Roles & Admin Passwords Control'}
             </h1>
             <p className="text-xs text-slate-400 mt-1">
               {isArabic
-                ? 'قم بمنح وتعديل صلاحيات الأدمن والمشرفين، أو تخصيص مصفوفة الوصول لكافة أقسام النظام.'
-                : 'Assign roles to any user account or customize granular permission matrix rules across system modules.'}
+                ? 'قم بتعيين الصلاحيات للمستخدمين، وتغيير أو إضافة كلمات السر الخاصة بدخول لوحة التحكم الإدارية.'
+                : 'Manage user access levels and configure admin panel login passcodes.'}
             </p>
           </div>
 
@@ -241,10 +381,10 @@ export const AdminPermissionsClient: React.FC = () => {
         )}
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-3 border-b border-white/10 pb-2">
+        <div className="flex items-center gap-3 border-b border-white/10 pb-2 overflow-x-auto">
           <button
             onClick={() => setActiveTab('USERS_ASSIGNMENT')}
-            className={`px-5 py-3 rounded-2xl text-xs font-bold flex items-center gap-2 transition ${
+            className={`px-5 py-3 rounded-2xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap ${
               activeTab === 'USERS_ASSIGNMENT'
                 ? 'bg-[#D4AF37] text-[#0B0F17] shadow-xl font-black'
                 : 'bg-white/5 text-slate-300 hover:bg-white/10'
@@ -258,8 +398,23 @@ export const AdminPermissionsClient: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setActiveTab('ADMIN_PASSWORDS')}
+            className={`px-5 py-3 rounded-2xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap ${
+              activeTab === 'ADMIN_PASSWORDS'
+                ? 'bg-[#D4AF37] text-[#0B0F17] shadow-xl font-black'
+                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            <Lock className="w-4 h-4 text-amber-400" />
+            <span>{isArabic ? 'كلمات سر دخول الأدمن (Admin Passwords)' : 'Admin Login Passwords'}</span>
+            <span className="ml-1 px-2 py-0.5 rounded-full bg-black/30 text-[10px]">
+              {adminPasswords.length}
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('ROLE_MATRIX')}
-            className={`px-5 py-3 rounded-2xl text-xs font-bold flex items-center gap-2 transition ${
+            className={`px-5 py-3 rounded-2xl text-xs font-bold flex items-center gap-2 transition whitespace-nowrap ${
               activeTab === 'ROLE_MATRIX'
                 ? 'bg-[#D4AF37] text-[#0B0F17] shadow-xl font-black'
                 : 'bg-white/5 text-slate-300 hover:bg-white/10'
@@ -401,7 +556,153 @@ export const AdminPermissionsClient: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 2: GRANULAR ROLE PERMISSIONS MATRIX */}
+        {/* TAB 2: ADMIN PASSWORDS CONTROL */}
+        {activeTab === 'ADMIN_PASSWORDS' && (
+          <div className="space-y-6">
+            
+            {/* Add New Password Form */}
+            <div className="glass-panel p-6 rounded-3xl border border-[#D4AF37]/30 shadow-2xl space-y-4">
+              <div className="flex items-center gap-2 text-white font-extrabold text-sm">
+                <Plus className="w-4 h-4 text-[#D4AF37]" />
+                <span>{isArabic ? 'إضافة كلمة سر جديدة لدخول الأدمن (Add New Admin Password)' : 'Add New Admin Login Passcode'}</span>
+              </div>
+              <form onSubmit={handleAddPassword} className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  required
+                  placeholder={isArabic ? 'أدخل كلمة السر الجديدة (مثال: MrRawAdmin2026!)' : 'Enter new password...'}
+                  value={newPassInput}
+                  onChange={(e) => setNewPassInput(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-[#D4AF37]"
+                />
+                <button
+                  type="submit"
+                  disabled={savingPass || !newPassInput.trim()}
+                  className="px-6 py-3 rounded-xl gold-gradient-btn text-xs font-black uppercase text-[#0B0F17] flex items-center justify-center gap-2 whitespace-nowrap shadow-lg"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{savingPass ? 'جاري الإضافة...' : 'حفظ كلمة السر الجديدة'}</span>
+                </button>
+              </form>
+            </div>
+
+            {/* Existing Passwords Grid */}
+            <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-[#D4AF37]" />
+                  <span>{isArabic ? 'كلمات السر الفعالة حالياً لدخول لوحة التحكم' : 'Active Admin Passwords'}</span>
+                </h3>
+                <span className="text-xs text-slate-400 font-bold">
+                  {adminPasswords.length} {isArabic ? 'كلمة سر مسجلة' : 'passwords registered'}
+                </span>
+              </div>
+
+              {loadingPasswords ? (
+                <div className="p-8 text-center text-slate-400 space-y-2">
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#D4AF37]" />
+                  <p className="text-xs">{isArabic ? 'جاري تحميل كلمات السر...' : 'Loading admin passwords...'}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {adminPasswords.map((pass, idx) => {
+                    const isVisible = Boolean(showPassMap[pass])
+                    const isEditingThis = editingPass?.oldPass === pass
+
+                    return (
+                      <div
+                        key={pass + idx}
+                        className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-[#D4AF37]/40 transition space-y-3 relative group"
+                      >
+                        {isEditingThis ? (
+                          <form onSubmit={handleUpdatePassword} className="space-y-3">
+                            <label className="text-xs font-bold text-[#D4AF37] block">تعديل كلمة السر:</label>
+                            <input
+                              type="text"
+                              required
+                              value={editingPass.newPass}
+                              onChange={(e) => setEditingPass({ ...editingPass, newPass: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-[#D4AF37] text-xs text-white font-mono"
+                            />
+                            <div className="flex items-center justify-end gap-2 text-xs">
+                              <button
+                                type="button"
+                                onClick={() => setEditingPass(null)}
+                                className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 font-bold"
+                              >
+                                {isArabic ? 'إلغاء' : 'Cancel'}
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={savingPass}
+                                className="px-4 py-1.5 rounded-lg gold-gradient-btn text-[#0B0F17] font-black"
+                              >
+                                {isArabic ? 'تحديث' : 'Update'}
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                {isArabic ? `كلمة السر #${idx + 1}` : `Password #${idx + 1}`}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => setShowPassMap({ ...showPassMap, [pass]: !isVisible })}
+                                  className="p-1.5 rounded-lg bg-white/5 text-slate-400 hover:text-white"
+                                  title={isVisible ? 'إخفاء' : 'إظهار'}
+                                >
+                                  {isVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(pass)
+                                    setStatusMsg(isArabic ? 'تم نسخ كلمة السر للحافظة!' : 'Password copied!')
+                                    setTimeout(() => setStatusMsg(''), 3000)
+                                  }}
+                                  className="p-1.5 rounded-lg bg-white/5 text-slate-400 hover:text-[#D4AF37]"
+                                  title="نسخ"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => setEditingPass({ oldPass: pass, newPass: pass })}
+                                  className="p-1.5 rounded-lg bg-white/5 text-slate-400 hover:text-sky-400"
+                                  title="تعديل"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePassword(pass)}
+                                  disabled={adminPasswords.length <= 1}
+                                  className="p-1.5 rounded-lg bg-white/5 text-slate-400 hover:text-rose-400 disabled:opacity-30 cursor-pointer"
+                                  title="حذف"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="font-mono text-base font-black text-amber-400 tracking-wider bg-black/40 px-3 py-2 rounded-xl border border-white/5 flex items-center justify-between">
+                              <span>{isVisible ? pass : '••••••••••••'}</span>
+                              <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-sans font-bold">
+                                ACTIVE
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 3: GRANULAR ROLE PERMISSIONS MATRIX */}
         {activeTab === 'ROLE_MATRIX' && (
           <div className="space-y-6">
             
